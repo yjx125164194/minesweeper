@@ -4,7 +4,7 @@
 #include<stdlib.h>
 #include"game.h"
 
-#define HARD
+#define EASY
 
 #ifdef HARD
 	#define LENGTH	30
@@ -23,7 +23,7 @@
 #define MIN(X,Y)  (X>Y?Y:X)
 #define MAX(X,Y)  (X>Y?X:Y) 
 
-#define SPEED     250*1000
+#define SPEED     500*1000
 void init_mine(Content_type (*fp)[LENGTH]) 
 {
 	int i,j,k;
@@ -127,7 +127,14 @@ void print_block(Content_type (*fp)[LENGTH],Location_type *lfp)
 				{
 					if(!(*(fp+i))[j].open_status)
 					{
-						printf("■");
+						if(!(*(fp+i))[j].flag_status)
+						{
+							printf("■");
+						}
+						else
+						{
+							printf("★");
+						}
 					}
 					else
 					{
@@ -205,9 +212,39 @@ void shift_user_location(Content_type (*fp)[LENGTH],Location_type *pUser,char ch
 	}
 }
 
-void open_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
+int open_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
 {
-	
+	int i,j;
+	int result = 0;
+	Location_type tmp;
+
+	if((*(fp+lfp->y))[lfp->x].open_status == false 
+		&& (*(fp+lfp->y))[lfp->x].flag_status == false)	
+	{
+		(*(fp+lfp->y))[lfp->x].open_status = true;
+		if((*(fp+lfp->y))[lfp->x].content == empty)
+		{
+			for(i = MAX(lfp->y-1,0);i <= MIN(lfp->y+1,WIDE-1);i++)
+			{	
+				for(j = MAX(lfp->x-1,0);j <= MIN(lfp->x+1,LENGTH-1);j++)
+				{
+					tmp.x = j;
+					tmp.y = i;
+					open_user_location(fp,&tmp);
+				}
+			}
+		}
+		else if((*(fp+lfp->y))[lfp->x].content == mine)
+		{
+			result = 1;
+		}
+	}
+	return result;
+}
+
+void flag_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
+{
+	(*(fp+lfp->y))[lfp->x].flag_status = !(*(fp+lfp->y))[lfp->x].flag_status;
 }
 int main(int argc,char *argv[])
 {
@@ -216,7 +253,8 @@ int main(int argc,char *argv[])
 	Location_type User;
 	Location_type *pUser;
 	char ch;
-	
+	int result = 0;
+
 	User.y = WIDE/2;
 	User.x = LENGTH/2;
 	pContent = &Content[0];
@@ -228,25 +266,32 @@ int main(int argc,char *argv[])
 	printf("Print any key to start the game\n");
 	while(1)
 	{
-		switch(ch = sh_getch())
-      		{
-			case '8':
-			case '5':
-			case '4':
-			case '6':
-				shift_user_location(pContent,pUser,ch);
-				break;
-			case '\n':
-				open_user_location(pContent,pUser);
-				break;
-			case ' ':
-				//flag_user_location(pContent,pUser);
-				break;
-			case 'q':
-				exit(0);
-			default:break;
+		if(kbhit())
+		{
+			switch(ch = sh_getch())
+      			{
+				case '8':
+				case '5':
+				case '4':
+				case '6':
+					shift_user_location(pContent,pUser,ch);
+					break;
+				case '0':
+					result = open_user_location(pContent,pUser);
+					break;
+				case '.':
+					flag_user_location(pContent,pUser);
+					break;
+				case 'q':
+					exit(0);
+				default:break;
+			}
 		}
 		print_block(pContent,pUser);
+		if(result)
+		{
+			break;
+		}
 	}
 	return 0;
 }
