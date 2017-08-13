@@ -308,12 +308,48 @@ void flag_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
 }
 int main(int argc,char *argv[])
 {
-	Content_type Content[WIDE][LENGTH];
-	Content_type (*pContent)[LENGTH];
 	Location_type User;
 	Location_type *pUser;
+
+	const char *s1 = "medium";
+	const char *s2 = "hard";
+
 	char ch;
 	int result = 0;
+/*
+	if(argc == 2)
+	{
+		if(!strcmp((argv)[1],s1))
+		{	
+			#undef EASY
+			#define MEDIUM
+			
+			#undef LENGTH
+			#undef WIDE
+			#undef NUMBER
+	
+			#define LENGTH	16
+			#define WIDE	16
+			#define NUMBER  40
+
+		}
+		else if(!strcmp((argv)[1],s2))
+		{	
+			#undef EASY
+			#define HARD
+			
+			#undef LENGTH
+			#undef WIDE
+			#undef NUMBER
+	
+			#define LENGTH	30
+			#define WIDE	16
+			#define NUMBER  99
+		}
+	}
+*/	
+	Content_type Content[WIDE][LENGTH];
+	Content_type (*pContent)[LENGTH];
 
 	User.y = WIDE/2;
 	User.x = LENGTH/2;
