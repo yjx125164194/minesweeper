@@ -152,64 +152,71 @@ void print_block(Content_type (*fp)[LENGTH],Location_type *lfp)
 	}
 }
 
-void shift_user_location(Content_type (*fp)[LENGTH],Location_type *pUser,char ch)
+_Bool shift_user_location(Content_type (*fp)[LENGTH],Location_type *pUser,char ch)
 {
 	_Bool status = true;
 	Location_type User_tmp;
 	User_tmp = *pUser;
-
-	switch(ch)
+	
+	//fprintf(stderr,"command %c,Location %d,%d\n",ch,pUser->x,pUser->y);
+	if(status)
 	{
-		case '8':
-			if(pUser->y > 0)
-			{
-				pUser->y--;//UP 
-			}
-			else
-			{
-				status = false;
-			}
-			break;
-            	case '5':
-			if(pUser->y < WIDE-1) 
-			{
-				pUser->y++;//DOWN
-			}
-			else
-			{
-				status = false;
-			}
-			break;
-            	case '4':
-			if(pUser->x > 0)
-			{
-				pUser->x--;//LEFT
-			}
-			else
-			{
-				status = false;
-			}
-			break;
-            	case '6':
-			if(pUser->y < LENGTH-1) 
-			{
-				pUser->x++;//RIGHT
-			}
-			else
-			{
-				status = false;
-			}
-			break;
-            	default:break;
-	}
-	if((*(fp+pUser->y))[pUser->x].open_status)
-	{
-		shift_user_location(fp,pUser,ch);
-	}
+		switch(ch)
+		{
+			case '8':
+				if(pUser->y > 0)
+				{
+					pUser->y--;//UP 
+				}
+				else
+				{
+					return false;
+				}
+				break;
+	            	case '5':
+				if(pUser->y < WIDE-1) 
+				{
+					pUser->y++;//DOWN
+				}
+				else
+				{
+					return false;
+				}
+				break;
+        	    	case '4':
+				if(pUser->x > 0)
+				{
+					pUser->x--;//LEFT
+				}
+				else
+				{
+					return false;
+				}
+				break;
+            		case '6':
+				if(pUser->x < LENGTH-1) 
+				{
+					pUser->x++;//RIGHT
+				}
+				else
+				{
+					return false;
+				}
+				break;
+          	  	default:break;
+		}
+		if((*(fp+pUser->y))[pUser->x].open_status)
+		{
+			status = shift_user_location(fp,pUser,ch);
+		}
+	}	
+	
 	if(!status)
 	{
 		*pUser = User_tmp;
+		return false;
 	}
+	return true;
 }
 
 int open_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
