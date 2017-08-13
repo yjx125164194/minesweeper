@@ -234,7 +234,7 @@ int open_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
 	int result = 0;
 	int flag_count = 0;
 	Location_type tmp;
-
+	
 	if((*(fp+lfp->y))[lfp->x].open_status == false 
 		&& (*(fp+lfp->y))[lfp->x].flag_status == false)	
 	{
@@ -309,16 +309,23 @@ void flag_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
 		(*(fp+lfp->y))[lfp->x].flag_status = !(*(fp+lfp->y))[lfp->x].flag_status;
 	}
 }
+void check_first_enter(Content_type (*fp)[LENGTH],Location_type *lfp)
+{
+	while((*(fp+lfp->y))[lfp->x].content == mine)
+	{
+		init_mine(fp);
+	} 
+}
 int main(int argc,char *argv[])
 {
 	Location_type User;
 	Location_type *pUser;
+	Content_type Content[WIDE][LENGTH];
+	Content_type (*pContent)[LENGTH];
 
 	char ch;
 	int result = 0;
-	
-	Content_type Content[WIDE][LENGTH];
-	Content_type (*pContent)[LENGTH];
+	_Bool first_enter = true;
 
 	User.y = WIDE/2;
 	User.x = LENGTH/2;
@@ -342,6 +349,11 @@ int main(int argc,char *argv[])
 					shift_user_location(pContent,pUser,ch);
 					break;
 				case '0':
+					if(first_enter)
+					{
+						check_first_enter(pContent,pUser);
+						first_enter = false;	
+					}
 					result = open_user_location(pContent,pUser);
 					break;
 				case '.':
