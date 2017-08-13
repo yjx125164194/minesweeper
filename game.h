@@ -2,7 +2,7 @@
 
 enum MineContent
 {
-	empty,
+	empty = 0,
 	one,
 	two,
 	three,

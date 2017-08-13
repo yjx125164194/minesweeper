@@ -232,6 +232,7 @@ int open_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
 {
 	int i,j;
 	int result = 0;
+	int flag_count = 0;
 	Location_type tmp;
 
 	if((*(fp+lfp->y))[lfp->x].open_status == false 
@@ -255,6 +256,39 @@ int open_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
 		else if((*(fp+lfp->y))[lfp->x].content == mine)
 		{
 			result = 1;
+		}
+	}
+	else
+	{
+		if((*(fp+lfp->y))[lfp->x].content != empty 
+		&& (*(fp+lfp->y))[lfp->x].content != mine)
+		{
+			for(i = MAX(lfp->y-1,0);i <= MIN(lfp->y+1,WIDE-1);i++)
+			{	
+				for(j = MAX(lfp->x-1,0);j <= MIN(lfp->x+1,LENGTH-1);j++)
+				{
+					if((*(fp+i))[j].flag_status)
+					{
+						flag_count++;
+					} 
+				}
+			}
+			if((*(fp+lfp->y))[lfp->x].content == flag_count)
+			{
+				for(i = MAX(lfp->y-1,0);i <= MIN(lfp->y+1,WIDE-1);i++)
+				{	
+					for(j = MAX(lfp->x-1,0);j <= MIN(lfp->x+1,LENGTH-1);j++)
+					{
+						if((*(fp+i))[j].open_status == false 
+							&& (*(fp+i))[j].flag_status == false)	
+						{
+							tmp.x = j;
+							tmp.y = i;
+							open_user_location(fp,&tmp);
+						}
+					}
+				}
+			} 
 		}
 	}
 	return result;
