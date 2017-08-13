@@ -24,6 +24,10 @@
 #define MAX(X,Y)  (X>Y?X:Y) 
 
 #define SPEED     500*1000
+
+int opened_count = 0;
+int marked_count = 0;
+
 void init_mine(Content_type (*fp)[LENGTH]) 
 {
 	int i,j,k;
@@ -146,9 +150,10 @@ void print_block(Content_type (*fp)[LENGTH],Location_type *lfp)
 					printf("□");
 				}
 			}
-		printf("\n");
+			printf("\n");
 		}
-	usleep(SPEED);
+		printf("Length %d,Wide %d,Mine %d Opened %d\n",LENGTH,WIDE,NUMBER - marked_count,opened_count);
+		usleep(SPEED);
 	}
 }
 
@@ -233,6 +238,8 @@ int open_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
 		&& (*(fp+lfp->y))[lfp->x].flag_status == false)	
 	{
 		(*(fp+lfp->y))[lfp->x].open_status = true;
+		opened_count++;
+
 		if((*(fp+lfp->y))[lfp->x].content == empty)
 		{
 			for(i = MAX(lfp->y-1,0);i <= MIN(lfp->y+1,WIDE-1);i++)
@@ -255,6 +262,14 @@ int open_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
 
 void flag_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
 {
+	if((*(fp+lfp->y))[lfp->x].flag_status)
+	{
+		marked_count--;
+	}
+	else
+	{
+		marked_count++;
+	}
 	(*(fp+lfp->y))[lfp->x].flag_status = !(*(fp+lfp->y))[lfp->x].flag_status;
 }
 int main(int argc,char *argv[])
@@ -301,9 +316,14 @@ int main(int argc,char *argv[])
 		print_block(pContent,pUser);
 		if(result)
 		{
-			break;
+			printf("You open the mine and failed!\n");
+			exit(0);
+		}
+		else if(opened_count == WIDE*LENGTH - NUMBER)
+		{
+			printf("You win the game!\n");
+			exit(0);
 		}
 	}
-	printf("you open the mine and failed!\n");
 	return 0;
 }
