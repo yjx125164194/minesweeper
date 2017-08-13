@@ -207,7 +207,11 @@ _Bool shift_user_location(Content_type (*fp)[LENGTH],Location_type *pUser,char c
 		}
 		if((*(fp+pUser->y))[pUser->x].open_status)
 		{
-			status = shift_user_location(fp,pUser,ch);
+			if((*(fp+pUser->y))[pUser->x].content == empty
+				|| (*(fp+pUser->y))[pUser->x].content == mine)
+			{
+				status = shift_user_location(fp,pUser,ch);
+			}
 		}
 	}	
 	
@@ -300,5 +304,6 @@ int main(int argc,char *argv[])
 			break;
 		}
 	}
+	printf("you open the mine and failed!\n");
 	return 0;
 }
