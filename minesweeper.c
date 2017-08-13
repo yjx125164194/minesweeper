@@ -112,7 +112,7 @@ void print_mine(Content_type (*fp)[LENGTH],int i,int j)
 			break;
 	}
 }
-void print_block(Content_type (*fp)[LENGTH],Location_type lfp)
+void print_block(Content_type (*fp)[LENGTH],Location_type *lfp)
 {
 	int m;
 	int i,j;
@@ -123,7 +123,7 @@ void print_block(Content_type (*fp)[LENGTH],Location_type lfp)
 		{
 			for(j = 0;j < LENGTH;j++)
 			{	
-				if(m == 0 || i != lfp.y || j != lfp.x)			
+				if(m == 0 || i != lfp->y || j != lfp->x)			
 				{
 					if(!(*(fp+i))[j].open_status)
 					{
@@ -145,22 +145,75 @@ void print_block(Content_type (*fp)[LENGTH],Location_type lfp)
 	}
 }
 
+void shift_user_location(Location_type *pUser,char ch)
+{
+	switch(ch)
+	{
+		case '8':
+			if(pUser->y > 0)
+			{
+				pUser->y--;//UP 
+			}
+			break;
+            	case '5':
+			if(pUser->y < WIDE-1) 
+			{
+				pUser->y++;//DOWN
+			}
+			break;
+            	case '4':
+			if(pUser->x > 0)
+			{
+				pUser->x--;//LEFT
+			}
+			break;
+            	case '6':
+			if(pUser->y < LENGTH-1) 
+			{
+				pUser->x++;//RIGHT
+			}
+			break;
+            	default:break;
+	}
+}
 int main(int argc,char *argv[])
 {
 	Content_type Content[WIDE][LENGTH];
 	Content_type (*pContent)[LENGTH];
 	Location_type User;
+	Location_type *pUser;
+	char ch;
 	
 	User.y = WIDE/2;
 	User.x = LENGTH/2;
 	pContent = &Content[0];
-	
+	pUser = &User;
+ 
 	srand((unsigned int) time(0));
 	
-	init_mine(pContent);
+	init_mine(pContent);	
+	printf("Print any key to start the game\n");
 	while(1)
 	{
-		print_block(pContent,User);
+		switch(ch = sh_getch())
+      		{
+			case '8':
+			case '5':
+			case '4':
+			case '6':
+				shift_user_location(pUser,ch);
+				break;
+			case '\n':
+				//open_user_location(pContent,pUser);
+				break;
+			case ' ':
+				//flag_user_location(pContent,pUser);
+				break;
+			case 'q':
+				exit(0);
+			default:break;
+		}
+		print_block(pContent,pUser);
 	}
 	return 0;
 }
