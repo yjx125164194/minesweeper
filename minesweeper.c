@@ -255,7 +255,7 @@ int open_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
 		}
 		else if((*(fp+lfp->y))[lfp->x].content == mine)
 		{
-			result = 1;
+			return 1;
 		}
 	}
 	else
@@ -284,7 +284,10 @@ int open_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
 						{
 							tmp.x = j;
 							tmp.y = i;
-							open_user_location(fp,&tmp);
+							if(open_user_location(fp,&tmp))
+							{
+								return 1;
+							}
 						}
 					}
 				}
