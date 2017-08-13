@@ -296,58 +296,27 @@ int open_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
 
 void flag_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
 {
-	if((*(fp+lfp->y))[lfp->x].flag_status)
+	if(!(*(fp+lfp->y))[lfp->x].open_status)
 	{
-		marked_count--;
+		if((*(fp+lfp->y))[lfp->x].flag_status)
+		{
+			marked_count--;
+		}
+		else
+		{
+			marked_count++;
+		}
+		(*(fp+lfp->y))[lfp->x].flag_status = !(*(fp+lfp->y))[lfp->x].flag_status;
 	}
-	else
-	{
-		marked_count++;
-	}
-	(*(fp+lfp->y))[lfp->x].flag_status = !(*(fp+lfp->y))[lfp->x].flag_status;
 }
 int main(int argc,char *argv[])
 {
 	Location_type User;
 	Location_type *pUser;
 
-	const char *s1 = "medium";
-	const char *s2 = "hard";
-
 	char ch;
 	int result = 0;
-/*
-	if(argc == 2)
-	{
-		if(!strcmp((argv)[1],s1))
-		{	
-			#undef EASY
-			#define MEDIUM
-			
-			#undef LENGTH
-			#undef WIDE
-			#undef NUMBER
 	
-			#define LENGTH	16
-			#define WIDE	16
-			#define NUMBER  40
-
-		}
-		else if(!strcmp((argv)[1],s2))
-		{	
-			#undef EASY
-			#define HARD
-			
-			#undef LENGTH
-			#undef WIDE
-			#undef NUMBER
-	
-			#define LENGTH	30
-			#define WIDE	16
-			#define NUMBER  99
-		}
-	}
-*/	
 	Content_type Content[WIDE][LENGTH];
 	Content_type (*pContent)[LENGTH];
 
