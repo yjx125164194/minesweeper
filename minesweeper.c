@@ -145,8 +145,12 @@ void print_block(Content_type (*fp)[LENGTH],Location_type *lfp)
 	}
 }
 
-void shift_user_location(Location_type *pUser,char ch)
+void shift_user_location(Content_type (*fp)[LENGTH],Location_type *pUser,char ch)
 {
+	_Bool status = true;
+	Location_type User_tmp;
+	User_tmp = *pUser;
+
 	switch(ch)
 	{
 		case '8':
@@ -154,11 +158,19 @@ void shift_user_location(Location_type *pUser,char ch)
 			{
 				pUser->y--;//UP 
 			}
+			else
+			{
+				status = false;
+			}
 			break;
             	case '5':
 			if(pUser->y < WIDE-1) 
 			{
 				pUser->y++;//DOWN
+			}
+			else
+			{
+				status = false;
 			}
 			break;
             	case '4':
@@ -166,15 +178,36 @@ void shift_user_location(Location_type *pUser,char ch)
 			{
 				pUser->x--;//LEFT
 			}
+			else
+			{
+				status = false;
+			}
 			break;
             	case '6':
 			if(pUser->y < LENGTH-1) 
 			{
 				pUser->x++;//RIGHT
 			}
+			else
+			{
+				status = false;
+			}
 			break;
             	default:break;
 	}
+	if((*(fp+pUser->y))[pUser->x].open_status)
+	{
+		shift_user_location(fp,pUser,ch);
+	}
+	if(!status)
+	{
+		*pUser = User_tmp;
+	}
+}
+
+void open_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
+{
+	
 }
 int main(int argc,char *argv[])
 {
@@ -201,10 +234,10 @@ int main(int argc,char *argv[])
 			case '5':
 			case '4':
 			case '6':
-				shift_user_location(pUser,ch);
+				shift_user_location(pContent,pUser,ch);
 				break;
 			case '\n':
-				//open_user_location(pContent,pUser);
+				open_user_location(pContent,pUser);
 				break;
 			case ' ':
 				//flag_user_location(pContent,pUser);
