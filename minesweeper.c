@@ -23,6 +23,7 @@
 #define MIN(X,Y)  (X>Y?Y:X)
 #define MAX(X,Y)  (X>Y?X:Y) 
 
+#define SPEED     250*1000
 void init_mine(Content_type (*fp)[LENGTH]) 
 {
 	int i,j,k;
@@ -34,7 +35,9 @@ void init_mine(Content_type (*fp)[LENGTH])
 		for(j = 0;j < LENGTH;j++)
 		{
 			(*(fp+i))[j].content = empty;
-			(*(fp+i))[j].status = false;
+			(*(fp+i))[j].mine_status = false;
+			(*(fp+i))[j].open_status = false;
+			(*(fp+i))[j].flag_status = false;
 		}
 	}
 	// set random mine
@@ -45,7 +48,7 @@ void init_mine(Content_type (*fp)[LENGTH])
 		if((*(fp+x))[y].content == empty)
 		{
 			(*(fp+x))[y].content = mine;
-			(*(fp+x))[y].status = true;
+			(*(fp+x))[y].mine_status = true;
 		}
 		else
 		{
@@ -57,13 +60,13 @@ void init_mine(Content_type (*fp)[LENGTH])
 	{
 		for(j = 0;j < LENGTH;j++)
 		{
-			if(!(*(fp+i))[j].status)
+			if(!(*(fp+i))[j].mine_status)
 			{
 				for(itmp = MAX(i-1,0);itmp <= MIN(i+1,WIDE-1);itmp++)
 				{	
 					for(jtmp = MAX(j-1,0);jtmp <= MIN(j+1,LENGTH-1);jtmp++)
 					{	
-						if((*(fp+itmp))[jtmp].status)
+						if((*(fp+itmp))[jtmp].mine_status)
 						{
 							(*(fp+i))[j].content++;
 						}
@@ -73,65 +76,91 @@ void init_mine(Content_type (*fp)[LENGTH])
 		}
 	}
 }
-void print_block(Content_type (*fp)[LENGTH])
+void print_mine(Content_type (*fp)[LENGTH],int i,int j)
 {
-	
-}
-void print_mine(Content_type (*fp)[LENGTH])
-{
-	system("clear");
-
-	int i,j;
-	for(i = 0;i < WIDE;i++)
+	switch((*(fp+i))[j].content)
 	{
-		for(j = 0;j < LENGTH;j++)
-		{
-			switch((*(fp+i))[j].content)
-			{
-				case empty:
-					printf(" ");
-					break;
-				case one:
-					printf("1");
-					break;
-				case two:
-					printf("2");
-					break;
-				case three:
-					printf("3");
-					break;
-				case four:
-					printf("4");
-					break;
-				case five:
-					printf("5");
-					break;
-				case six:
-					printf("6");
-					break;
-				case seven:
-					printf("7");
-					break;
-				case eight:
-					printf("8");
-					break;
-				case mine:
-					printf("*");
-					break;
-			}
-		}
-		printf("\n");
+		case empty:
+			printf(" ");
+			break;
+		case one:
+			printf("1");
+			break;
+		case two:
+			printf("2");
+			break;
+		case three:
+			printf("3");
+			break;
+		case four:
+			printf("4");
+			break;
+		case five:
+			printf("5");
+			break;
+		case six:
+			printf("6");
+			break;
+		case seven:
+			printf("7");
+			break;
+		case eight:
+			printf("8");
+			break;
+		case mine:
+			printf("※");
+			break;
 	}
 }
+void print_block(Content_type (*fp)[LENGTH],Location_type lfp)
+{
+	int m;
+	int i,j;
+	for(m = 0;m < 2;m++)
+	{
+		system("clear");	
+		for(i = 0;i < WIDE;i++)
+		{
+			for(j = 0;j < LENGTH;j++)
+			{	
+				if(m == 0 || i != lfp.y || j != lfp.x)			
+				{
+					if(!(*(fp+i))[j].open_status)
+					{
+						printf("■");
+					}
+					else
+					{
+						print_mine(fp,i,j);	
+					}
+				}
+				else
+				{
+					printf("□");
+				}
+			}
+		printf("\n");
+		}
+	usleep(SPEED);
+	}
+}
+
 int main(int argc,char *argv[])
 {
 	Content_type Content[WIDE][LENGTH];
 	Content_type (*pContent)[LENGTH];
-
+	Location_type User;
+	
+	User.y = WIDE/2;
+	User.x = LENGTH/2;
 	pContent = &Content[0];
+	
 	srand((unsigned int) time(0));
 	
 	init_mine(pContent);
-	print_mine(pContent);
+	while(1)
+	{
+		print_block(pContent,User);
+	}
 	return 0;
 }

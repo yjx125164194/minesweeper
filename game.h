@@ -16,11 +16,14 @@ enum MineContent
 
 struct BlockContent
 {
-	_Bool status;
+	_Bool mine_status;
+	_Bool open_status;
+	_Bool flag_status;
 	enum MineContent content;
 };
 
 struct Location
+
 {
     int x;
     int y;
