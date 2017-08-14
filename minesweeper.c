@@ -5,6 +5,7 @@
 #include"game.h"
 
 #define EASY
+#define AUTO
 
 #ifdef HARD
 	#define LENGTH	30
@@ -23,8 +24,11 @@
 #define MIN(X,Y)  (X>Y?Y:X)
 #define MAX(X,Y)  (X>Y?X:Y) 
 
-#define SPEED     500*1000
-
+#ifdef AUTO
+	#define SPEED       500*1000
+#else
+	#define SPEED       500*1000
+#endif
 int opened_count = 0;
 int marked_count = 0;
 
@@ -120,7 +124,15 @@ void print_block(Content_type (*fp)[LENGTH],Location_type *lfp)
 {
 	int m;
 	int i,j;
-	for(m = 0;m < 2;m++)
+	int Loop_count;
+	
+	#ifndef AUTO
+	 	Loop_count = 2;
+	#else
+		Loop_count = 1;
+	#endif
+
+	for(m = 0;m < Loop_count;m++)
 	{
 		system("clear");	
 		for(i = 0;i < WIDE;i++)
@@ -319,6 +331,29 @@ void check_first_enter(Content_type (*fp)[LENGTH],Location_type *lfp)
 		init_mine(fp);
 	} 
 }
+/*AUTO FUNCTION*/
+
+int random_open(Content_type (*fp)[LENGTH])
+{
+	Location_type lfp;
+	int result;
+
+	static _Bool auto_first_enter = true;
+	
+	do
+	{
+		lfp.x = rand()%LENGTH;
+		lfp.y = rand()%WIDE;
+	}while((*(fp+lfp.y))[lfp.x].open_status);
+	if((result = open_user_location(fp,&lfp)) && auto_first_enter) 
+	{
+		init_mine(fp);
+		random_open(fp);
+	}
+	auto_first_enter = false;
+	return result;
+}
+
 int main(int argc,char *argv[])
 {
 	Location_type User;
@@ -339,8 +374,10 @@ int main(int argc,char *argv[])
 	
 	init_mine(pContent);	
 	printf("Print any key to start the game\n");
+	
 	while(1)
 	{
+	#ifndef AUTO
 		if(kbhit())
 		{
 			switch(ch = sh_getch())
@@ -367,6 +404,9 @@ int main(int argc,char *argv[])
 				default:break;
 			}
 		}
+	#else
+		result = random_open(pContent);
+	#endif
 		print_block(pContent,pUser);
 		if(result)
 		{
