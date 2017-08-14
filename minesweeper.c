@@ -29,6 +29,14 @@
 #else
 	#define SPEED       500*1000
 #endif
+
+#ifdef AUTO
+	_Bool AUTO_RANDOM     = false;
+	_Bool AUTO_NOHUMAN   = false;
+	_Bool AUTO_HUMAN    = false;
+#endif	
+
+
 int opened_count = 0;
 int marked_count = 0;
 
@@ -351,9 +359,88 @@ int random_open(Content_type (*fp)[LENGTH])
 		random_open(fp);
 	}
 	auto_first_enter = false;
+	
+	AUTO_RANDOM = true;
+	AUTO_NOHUMAN = false;
 	return result;
 }
+int nohuman_open(Content_type (*fp)[LENGTH])
+{
+	int i,j;
+	int itmp,jtmp;
+	int unopen_block = 0;
+	int flag_block = 0;
+	int open_count_tmp = opened_count;
+	Location_type lfp;
 
+	for(i = 0;i < WIDE;i++)
+	{	
+		for(j = 0;j < LENGTH;j++)
+		{	
+			if((*(fp+i))[j].open_status)
+			{
+				if((*(fp+i))[j].content != empty && (*(fp+i))[j].content != mine)
+				{
+					for(itmp = MAX(i-1,0);itmp <= MIN(i+1,WIDE-1);itmp++)
+					{	
+						for(jtmp = MAX(j-1,0);jtmp <= MIN(j+1,LENGTH-1);jtmp++)
+						{
+							if(!(*(fp+itmp))[jtmp].open_status)	
+							{
+								if(!(*(fp+itmp))[jtmp].flag_status)	
+								{
+									unopen_block++;
+								}
+								else
+								{
+									flag_block++;
+								}
+							}
+						}
+					}
+					if((unopen_block + flag_block) == (*(fp+i))[j].content)
+					{
+						for(itmp = MAX(i-1,0);itmp <= MIN(i+1,WIDE-1);itmp++)
+						{	
+							for(jtmp = MAX(j-1,0);jtmp <= MIN(j+1,LENGTH-1);jtmp++)
+							{
+								if((!(*(fp+itmp))[jtmp].open_status) &&(!(*(fp+itmp))[jtmp].flag_status))	
+								{
+									lfp.x = jtmp;
+									lfp.y = itmp;
+									flag_user_location(fp,&lfp);
+								}
+							}
+						}
+					}
+					unopen_block = 0;
+					flag_block = 0;
+				}
+			}
+		}
+	}
+	for(i = 0;i < WIDE;i++)
+	{	
+		for(j = 0;j < LENGTH;j++)
+		{
+			if((*(fp+i))[j].open_status)
+			{
+				lfp.x = j;
+				lfp.y = i;
+				open_user_location(fp,&lfp);
+			}
+		}
+	}
+	if(opened_count == open_count_tmp)
+	{
+		AUTO_NOHUMAN = true;
+		AUTO_RANDOM = false;
+	}
+	else
+	{
+		AUTO_NOHUMAN = false;
+	}
+}
 int main(int argc,char *argv[])
 {
 	Location_type User;
@@ -373,8 +460,9 @@ int main(int argc,char *argv[])
 	srand((unsigned int) time(0));
 	
 	init_mine(pContent);	
-	printf("Print any key to start the game\n");
-	
+	#ifdef AUTO	
+		printf("Print any key to start the game\n");
+	#endif
 	while(1)
 	{
 	#ifndef AUTO
@@ -405,7 +493,18 @@ int main(int argc,char *argv[])
 			}
 		}
 	#else
-		result = random_open(pContent);
+		if(!AUTO_RANDOM)
+		{
+			result = random_open(pContent);
+		}
+		if(!AUTO_NOHUMAN)
+		{
+			nohuman_open(pContent);
+		}
+/*		if(!AUTO_HUMAN)
+		{
+			result = human_open(pContent);
+		}*/
 	#endif
 		print_block(pContent,pUser);
 		if(result)
