@@ -4,7 +4,7 @@
 #include<stdlib.h>
 #include"game.h"
 
-#define EASY
+#define HARD
 #define AUTO
 
 #ifdef HARD
@@ -33,7 +33,6 @@
 #ifdef AUTO
 	_Bool AUTO_RANDOM     = false;
 	_Bool AUTO_NOHUMAN   = false;
-	_Bool AUTO_HUMAN    = false;
 #endif	
 
 
@@ -54,6 +53,9 @@ void init_mine(Content_type (*fp)[LENGTH])
 			(*(fp+i))[j].mine_status = false;
 			(*(fp+i))[j].open_status = false;
 			(*(fp+i))[j].flag_status = false;
+#ifdef AUTO
+			(*(fp+i))[j].question_status = false;
+#endif
 		}
 	}
 	// set random mine
@@ -362,14 +364,17 @@ int random_open(Content_type (*fp)[LENGTH])
 	
 	AUTO_RANDOM = true;
 	AUTO_NOHUMAN = false;
+	
 	return result;
 }
-int nohuman_open(Content_type (*fp)[LENGTH])
+_Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number);
+
+void nohuman_open(Content_type (*fp)[LENGTH])
 {
 	int i,j;
 	int itmp,jtmp;
-	int unopen_block = 0;
-	int flag_block = 0;
+	int unopened_block = 0;
+	int flaged_block = 0;
 	int open_count_tmp = opened_count;
 	Location_type lfp;
 
@@ -389,16 +394,16 @@ int nohuman_open(Content_type (*fp)[LENGTH])
 							{
 								if(!(*(fp+itmp))[jtmp].flag_status)	
 								{
-									unopen_block++;
+									unopened_block++;
 								}
 								else
 								{
-									flag_block++;
+									flaged_block++;
 								}
 							}
 						}
 					}
-					if((unopen_block + flag_block) == (*(fp+i))[j].content)
+					if((unopened_block + flaged_block) == (*(fp+i))[j].content)
 					{
 						for(itmp = MAX(i-1,0);itmp <= MIN(i+1,WIDE-1);itmp++)
 						{	
@@ -413,8 +418,8 @@ int nohuman_open(Content_type (*fp)[LENGTH])
 							}
 						}
 					}
-					unopen_block = 0;
-					flag_block = 0;
+					unopened_block = 0;
+					flaged_block = 0;
 				}
 			}
 		}
@@ -433,13 +438,160 @@ int nohuman_open(Content_type (*fp)[LENGTH])
 	}
 	if(opened_count == open_count_tmp)
 	{
-		AUTO_NOHUMAN = true;
-		AUTO_RANDOM = false;
+		if(!cal_open(fp,2,1))
+		{
+			AUTO_NOHUMAN = true;
+			AUTO_RANDOM = false;
+		}
+		else
+		{	
+			AUTO_NOHUMAN = false;
+		}
 	}
 	else
 	{
 		AUTO_NOHUMAN = false;
 	}
+}
+
+void cal_question_clear(Content_type (*fp)[LENGTH])
+{
+	int i,j;
+	for(i = 0;i < WIDE;i++)
+	{
+		for(j = 0;j < LENGTH;j++)
+		{
+			(*(fp+i))[j].question_status = false;
+		}
+	}
+}
+
+
+/*算法考虑三种情况
+2个里有1个
+3个里有1个
+3个里有2个
+即all_number与mine_number组合有以上三种*/
+
+_Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number)
+{
+	int i,j;
+	int itmp,jtmp;
+	int itmp2,jtmp2;
+	int unopened_count = 0;
+
+	int question_count = 0;
+	int unquestion_count = 0;
+	int unopened_count_next = 0;
+	int unmine_count = 0;
+	int flag_count = 0;
+
+	Location_type tmp_question;
+	Location_type tmp_unquestion[8];
+
+	_Bool result = false;
+
+	for(i = 0;i < WIDE;i++)
+	{	
+		for(j = 0;j < LENGTH;j++)
+		{	
+			if((*(fp+i))[j].open_status && (*(fp+i))[j].content == mine_number)
+			{
+				for(itmp = MAX(i-1,0);itmp <= MIN(i+1,WIDE-1);itmp++)
+				{	
+					for(jtmp = MAX(j-1,0);jtmp <= MIN(j+1,LENGTH-1);jtmp++)
+					{
+						if((!(*(fp+itmp))[jtmp].open_status) && (!(*(fp+itmp))[jtmp].flag_status))	
+						{
+							unopened_count++;
+						}
+					}
+				}
+			}
+			if(unopened_count == all_number)
+			{
+				for(itmp = MAX(i-1,0);itmp <= MIN(i+1,WIDE-1);itmp++)
+				{	
+					for(jtmp = MAX(j-1,0);jtmp <= MIN(j+1,LENGTH-1);jtmp++)
+					{
+						if((!(*(fp+itmp))[jtmp].open_status) && (!(*(fp+itmp))[jtmp].flag_status))	
+						{
+							(*(fp+itmp))[jtmp].question_status = true;
+							(*(fp+itmp))[jtmp].all_number = all_number;
+							(*(fp+itmp))[jtmp].mine_number = mine_number;
+						}
+					}
+				}
+				for(itmp = MAX(i-2,0);itmp <= MIN(i+2,WIDE-1);itmp++)
+				{	
+					for(jtmp = MAX(j-2,0);jtmp <= MIN(j+2,LENGTH-1);jtmp++)
+					{
+						if(((*(fp+itmp))[jtmp].open_status) && ((*(fp+i))[j].content != empty))
+						{
+							for(itmp2 = MAX(itmp-1,0);itmp2 <= MIN(itmp+1,WIDE-1);itmp2++)
+							{	
+								for(jtmp2 = MAX(jtmp-1,0);jtmp2 <= MIN(jtmp+1,LENGTH-1);jtmp2++)
+								{
+									if((!(*(fp+itmp2))[jtmp2].open_status) 
+									&& (!(*(fp+itmp2))[jtmp2].flag_status))	
+									{
+										unopened_count_next++;
+										if((*(fp+itmp2))[jtmp2].question_status)
+										{
+											tmp_question.x = jtmp2;
+											tmp_question.y = itmp2;
+											question_count++;	
+										}	
+										else
+										{
+											tmp_unquestion[unquestion_count].x = jtmp2;
+											tmp_unquestion[unquestion_count].y = itmp2;
+											unquestion_count++;
+										}
+									}
+									else if((*(fp+itmp2))[jtmp2].flag_status)
+									{
+										flag_count++;
+									}
+								}		
+							}
+							if(question_count == (*(fp+tmp_question.y))[tmp_question.x].all_number
+								&& unopened_count_next > question_count)
+							{
+								unmine_count =(*(fp+itmp))[jtmp].content 
+									-(*(fp+tmp_question.y))[tmp_question.x].all_number
+									-flag_count;
+								if(unmine_count == 0)
+								{
+									while(unquestion_count)
+									{
+										open_user_location(fp,&tmp_unquestion[--unquestion_count]);
+										result = true;
+									}
+								}
+								else if(unmine_count == unquestion_count)
+								{
+									while(unquestion_count)
+									{
+										flag_user_location(fp,&tmp_unquestion[--unquestion_count]);
+										result = true;
+									}
+								}
+							}
+						}
+					unopened_count_next = 0;
+					question_count = 0;
+					unquestion_count = 0;
+					unmine_count = 0;	
+					flag_count = 0;
+					}
+				}	
+			}
+			unopened_count = 0;
+			cal_question_clear(fp);
+		}
+	}
+	return result;
 }
 int main(int argc,char *argv[])
 {
@@ -501,10 +653,6 @@ int main(int argc,char *argv[])
 		{
 			nohuman_open(pContent);
 		}
-/*		if(!AUTO_HUMAN)
-		{
-			result = human_open(pContent);
-		}*/
 	#endif
 		print_block(pContent,pUser);
 		if(result)

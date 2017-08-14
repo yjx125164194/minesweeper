@@ -1,5 +1,13 @@
 #include<stdbool.h>
 
+#define AUTO
+
+typedef struct Location
+{
+    int x;
+    int y;
+}Location_type;
+
 enum MineContent
 {
 	empty = 0,
@@ -14,23 +22,18 @@ enum MineContent
 	mine
 };
 
-struct BlockContent
+typedef struct BlockContent
 {
 	_Bool mine_status;
 	_Bool open_status;
 	_Bool flag_status;
 	enum MineContent content;
-};
-
-struct Location
-
-{
-    int x;
-    int y;
-};
-
-typedef struct BlockContent Content_type;
-typedef struct Location Location_type;
+#ifdef AUTO
+	_Bool question_status;
+	int   all_number;
+	int   mine_number;
+#endif	
+}Content_type;
 
 extern int sh_getch(void);
 extern int kbhit(void);
