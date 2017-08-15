@@ -25,15 +25,17 @@
 #define MIN(X,Y)  (X>Y?Y:X)
 #define MAX(X,Y)  (X>Y?X:Y) 
 
-#ifdef AUTO
+#ifdef AUTO_MODE
 	#define SPEED       500*1000
+	#define TIMES	    10	
 #else
 	#define SPEED       500*1000
+	#define TIMES       1
 #endif
 
-#ifdef AUTO
-	_Bool AUTO_RANDOM     = false;
-	_Bool AUTO_NOHUMAN   = false;
+#ifdef AUTO_MODE
+	_Bool AUTO_MODE_RANDOM     = false;
+	_Bool AUTO_MODE_NOHUMAN   = false;
 #endif	
 
 
@@ -54,7 +56,7 @@ void init_mine(Content_type (*fp)[LENGTH])
 			(*(fp+i))[j].mine_status = false;
 			(*(fp+i))[j].open_status = false;
 			(*(fp+i))[j].flag_status = false;
-#ifdef AUTO
+#ifdef AUTO_MODE
 			(*(fp+i))[j].question_status = false;
 #endif
 		}
@@ -137,7 +139,7 @@ void print_block(Content_type (*fp)[LENGTH],Location_type *lfp)
 	int i,j;
 	int Loop_count;
 	
-	#ifndef AUTO
+	#ifndef AUTO_MODE
 	 	Loop_count = 2;
 	#else
 		Loop_count = 1;
@@ -157,7 +159,7 @@ void print_block(Content_type (*fp)[LENGTH],Location_type *lfp)
 						if(0)
 						{
 						}
-						#ifdef AUTO
+						#ifdef AUTO_MODE
 						else if((*(fp+i))[j].question_status)
 						{
 							printf("?");
@@ -346,44 +348,62 @@ void flag_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
 }
 void check_first_enter(Content_type (*fp)[LENGTH],Location_type *lfp)
 {
+#ifdef WIN7_MODE
+	while((*(fp+lfp->y))[lfp->x].content != empty)
+#else
 	while((*(fp+lfp->y))[lfp->x].content == mine)
+#endif
 	{
 		init_mine(fp);
 	} 
 }
-/*AUTO FUNCTION*/
-#ifdef AUTO
+/*AUTO_MODE FUNCTION*/
+#ifdef AUTO_MODE
 int random_open(Content_type (*fp)[LENGTH])
 {
 	Location_type lfp;
-	int result;
-
+	int i,j;
 	static _Bool auto_first_enter = true;
 	
-	do
+	if(opened_count < (((WIDE * LENGTH) - NUMBER)*3/5))
 	{
-		lfp.x = rand()%LENGTH;
-		lfp.y = rand()%WIDE;
-	}while((*(fp+lfp.y))[lfp.x].open_status);
-	
-	if((result = open_user_location(fp,&lfp)) == 1)
+		do
+		{
+			lfp.x = rand()%LENGTH;
+			lfp.y = rand()%WIDE;
+		}while((*(fp+lfp.y))[lfp.x].open_status);
+	}
+	else
 	{
-		if(auto_first_enter)
-		{
-			init_mine(fp);
-			random_open(fp);
-		}
-		else
-		{
-			return result;
+		for(i = 0;i < WIDE;i++)
+		{	
+			for(j = 0;j < LENGTH;j++)
+			{	
+				if(!(*(fp+i))[j].open_status)
+				{
+					lfp.x = j;
+					lfp.y = i;
+					i = WIDE;
+					j = LENGTH;
+				}
+			}
 		}
 	}
-	auto_first_enter = false;
+	if(auto_first_enter)
+	{
+		check_first_enter(fp,&lfp);
+		auto_first_enter = false;
+	}	
 	
-	AUTO_RANDOM = true;
-	AUTO_NOHUMAN = false;
+	if(open_user_location(fp,&lfp))
+	{
+		return 1;
+	}
 	
-	return result;
+	AUTO_MODE_RANDOM = true;
+	AUTO_MODE_NOHUMAN = false;
+	
+	return 0;
 }
 _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number);
 
@@ -456,19 +476,19 @@ void nohuman_open(Content_type (*fp)[LENGTH])
 	}
 	if(opened_count == open_count_tmp)
 	{
-		if(!cal_open(fp,2,1))
+		if((!cal_open(fp,2,1)) && (!cal_open(fp,3,1)) && (!cal_open(fp,3,2)))
 		{
-			AUTO_NOHUMAN = true;
-			AUTO_RANDOM = false;
+			AUTO_MODE_NOHUMAN = true;
+			AUTO_MODE_RANDOM = false;
 		}
 		else
 		{	
-			AUTO_NOHUMAN = false;
+			AUTO_MODE_NOHUMAN = false;
 		}
 	}
 	else
 	{
-		AUTO_NOHUMAN = false;
+		AUTO_MODE_NOHUMAN = false;
 	}
 }
 
@@ -542,9 +562,6 @@ _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number)
 			
 			if(unopened_count == all_number && unopened_count != 0)
 			{
-				//fprintf(stderr,"flag_count     = %d|%d,%d\n",flag_count,i,j);
-				//fprintf(stderr,"content        = %d|%d,%d\n",(*(fp+i))[j].content,i,j);
-				//fprintf(stderr,"unopened_count = %d|%d,%d\n\n",flag_count,i,j);
 				for(itmp = MAX(i-1,0);itmp <= MIN(i+1,WIDE-1);itmp++)
 				{	
 					for(jtmp = MAX(j-1,0);jtmp <= MIN(j+1,LENGTH-1);jtmp++)
@@ -556,13 +573,15 @@ _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number)
 							(*(fp+itmp))[jtmp].mine_number = mine_number;
 						}
 					}
-				}/*
+				}
 				for(itmp = MAX(i-2,0);itmp <= MIN(i+2,WIDE-1);itmp++)
 				{	
 					for(jtmp = MAX(j-2,0);jtmp <= MIN(j+2,LENGTH-1);jtmp++)
 					{
 						if(((*(fp+itmp))[jtmp].open_status) && ((*(fp+i))[j].content != empty))
 						{
+							tmp_question.x = LENGTH + 1;
+							tmp_question.y = WIDE + 1;
 							for(itmp2 = MAX(itmp-1,0);itmp2 <= MIN(itmp+1,WIDE-1);itmp2++)
 							{	
 								for(jtmp2 = MAX(jtmp-1,0);jtmp2 <= MIN(jtmp+1,LENGTH-1);jtmp2++)
@@ -590,11 +609,14 @@ _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number)
 									}
 								}		
 							}
-							if(question_count == (*(fp+tmp_question.y))[tmp_question.x].all_number
-								&& unopened_count_next > question_count)
+							
+							if((tmp_question.x != LENGTH + 1)
+  								&& (tmp_question.y != WIDE + 1)
+  								&& (question_count == (*(fp+tmp_question.y))[tmp_question.x].all_number)
+								&& (unopened_count_next > question_count))
 							{
 								unmine_count =(*(fp+itmp))[jtmp].content 
-									-(*(fp+tmp_question.y))[tmp_question.x].all_number
+									-(*(fp+tmp_question.y))[tmp_question.x].mine_number
 									-flag_count_next;
 								if(unmine_count == 0)
 								{
@@ -614,13 +636,13 @@ _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number)
 								}
 							}
 						}
-					unopened_count_next = 0;
-					question_count = 0;
-					unquestion_count = 0;
-					unmine_count = 0;	
-					flag_count_next = 0;
+						unopened_count_next = 0;
+						question_count = 0;
+						unquestion_count = 0;
+						unmine_count = 0;	
+						flag_count_next = 0;
 					}
-				}*/	
+				}	
 			}
 			flag_count = 0;
 			unopened_count = 0;
@@ -642,7 +664,12 @@ int main(int argc,char *argv[])
 	char ch;
 	int result = 0;
 	_Bool first_enter = true;
-
+	
+	int times = 0;
+#ifdef AUTO_MODE
+	int win = 0;
+	int lose = 0;
+#endif
 	User.y = WIDE/2;
 	User.x = LENGTH/2;
 	pContent = &Content[0];
@@ -650,60 +677,72 @@ int main(int argc,char *argv[])
  
 	srand((unsigned int) time(0));
 	
-	init_mine(pContent);	
-	#ifdef AUTO	
+	#ifdef AUTO_MODE	
 		printf("Print any key to start the game\n");
 	#endif
-	while(1)
+	for(times = 0;times < TIMES;times++)
 	{
-	#ifndef AUTO
-		if(kbhit())
+		init_mine(pContent);	
+		while(1)
 		{
-			switch(ch = sh_getch())
-      			{
-				case '8':
-				case '5':
-				case '4':
-				case '6':
-					shift_user_location(pContent,pUser,ch);
-					break;
-				case '0':
-					if(first_enter)
-					{
-						check_first_enter(pContent,pUser);
-						first_enter = false;	
-					}
-					result = open_user_location(pContent,pUser);
-					break;
-				case '.':
-					flag_user_location(pContent,pUser);
-					break;
-				case 'q':
-					exit(0);
-				default:break;
+		#ifndef AUTO_MODE
+			if(kbhit())
+			{
+				switch(ch = sh_getch())
+      				{
+					case '8':
+					case '5':
+					case '4':
+					case '6':
+						shift_user_location(pContent,pUser,ch);
+						break;
+					case '0':
+						if(first_enter)
+						{
+							check_first_enter(pContent,pUser);
+							first_enter = false;	
+						}
+						result = open_user_location(pContent,pUser);
+						break;
+					case '.':
+						flag_user_location(pContent,pUser);
+						break;
+					case 'q':
+						exit(0);
+					default:break;
+				}
+			}	
+		#else	
+			if(!AUTO_MODE_RANDOM)
+			{
+				result = random_open(pContent);
+			}
+			if(!AUTO_MODE_NOHUMAN)
+			{
+				nohuman_open(pContent);
+			}	
+		#endif
+			print_block(pContent,pUser);
+			if(result)
+			{
+			#ifndef AUTO_MODE
+				printf("You open the mine and failed!\n");
+			#else	
+				lose++;
+			#endif
+				break;
+			}
+			else if(opened_count == WIDE*LENGTH - NUMBER)
+			{
+			#ifndef AUTO_MODE
+				printf("You win the game!\n");
+			#else
+				win++;
+			#endif
+				break;
 			}
 		}
-	#else
-		if(!AUTO_RANDOM)
-		{
-			result = random_open(pContent);
-		}
-		if(!AUTO_NOHUMAN)
-		{
-			nohuman_open(pContent);
-		}
-	#endif
-		print_block(pContent,pUser);
-		if(result)
-		{
-			printf("You open the mine and failed!\n");
-			exit(0);
-		}
-		else if(opened_count == WIDE*LENGTH - NUMBER)
-		{
-			printf("You win the game!\n");
-			exit(0);
-		}
+		printf("you win %d times and lose %d times\n",win,lose);
 	}
 	return 0;
 }

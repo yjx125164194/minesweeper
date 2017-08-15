@@ -1,8 +1,8 @@
 #include<stdbool.h>
 
 #define HARD
-#define AUTO
-
+#define AUTO_MODE
+#define WIN7_MODE
 typedef struct Location
 {
     int x;
@@ -29,7 +29,7 @@ typedef struct BlockContent
 	_Bool open_status;
 	_Bool flag_status;
 	enum MineContent content;
-#ifdef AUTO
+#ifdef AUTO_MODE
 	_Bool question_status;
 	int   all_number;
 	int   mine_number;
