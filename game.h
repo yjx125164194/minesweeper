@@ -3,6 +3,8 @@
 #define HARD
 #define AUTO_MODE
 #define WIN7_MODE
+
+
 typedef struct Location
 {
     int x;

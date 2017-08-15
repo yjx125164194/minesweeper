@@ -26,7 +26,7 @@
 #define MAX(X,Y)  (X>Y?X:Y) 
 
 #ifdef AUTO_MODE
-	#define SPEED       500*1000
+	#define SPEED       100*1000
 	#define TIMES	    10	
 #else
 	#define SPEED       500*1000
@@ -35,9 +35,10 @@
 
 #ifdef AUTO_MODE
 	_Bool AUTO_MODE_RANDOM     = false;
-	_Bool AUTO_MODE_NOHUMAN   = false;
+	_Bool AUTO_MODE_NOHUMAN    = false;
+	_Bool AUTO_FIRST_ENTER     = true;
+	int   random_times 	   = 0;
 #endif	
-
 
 int opened_count = 0;
 int marked_count = 0;
@@ -186,7 +187,11 @@ void print_block(Content_type (*fp)[LENGTH],Location_type *lfp)
 			}
 			printf("\n");
 		}
+#ifndef AUTO_MODE
 		printf("Length %d,Wide %d,Mine %d Opened %d\n",LENGTH,WIDE,NUMBER - marked_count,opened_count);
+#else
+		printf("Mine %d Opened %d Random %d\n",NUMBER - marked_count,opened_count,random_times);
+#endif		
 		usleep(SPEED);
 	}
 }
@@ -363,9 +368,8 @@ int random_open(Content_type (*fp)[LENGTH])
 {
 	Location_type lfp;
 	int i,j;
-	static _Bool auto_first_enter = true;
 	
-	if(opened_count < (((WIDE * LENGTH) - NUMBER)*3/5))
+	if(opened_count < (((WIDE * LENGTH) - NUMBER)*4/5))
 	{
 		do
 		{
@@ -379,7 +383,7 @@ int random_open(Content_type (*fp)[LENGTH])
 		{	
 			for(j = 0;j < LENGTH;j++)
 			{	
-				if(!(*(fp+i))[j].open_status)
+				if((!(*(fp+i))[j].open_status) && (!(*(fp+i))[j].flag_status))
 				{
 					lfp.x = j;
 					lfp.y = i;
@@ -389,17 +393,17 @@ int random_open(Content_type (*fp)[LENGTH])
 			}
 		}
 	}
-	if(auto_first_enter)
+	if(AUTO_FIRST_ENTER)
 	{
 		check_first_enter(fp,&lfp);
-		auto_first_enter = false;
+		AUTO_FIRST_ENTER = false;
 	}	
-	
 	if(open_user_location(fp,&lfp))
 	{
 		return 1;
 	}
 	
+	random_times++;
 	AUTO_MODE_RANDOM = true;
 	AUTO_MODE_NOHUMAN = false;
 	
@@ -742,7 +746,13 @@ int main(int argc,char *argv[])
 				break;
 			}
 		}
+#ifdef AUTO_MODE
+		random_times = 0;
+		opened_count = 0;
+		marked_count = 0;
+		AUTO_FIRST_ENTER = true;
 		printf("you win %d times and lose %d times\n",win,lose);
+#endif	
 	}
 	return 0;
 }
