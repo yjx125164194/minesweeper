@@ -4,9 +4,6 @@
 #include<stdlib.h>
 #include"game.h"
 
-#define HARD
-#define AUTO
-
 #ifdef HARD
 	#define LENGTH	30
 	#define WIDE	16
@@ -16,6 +13,10 @@
 	#define WIDE	16
 	#define NUMBER  40
 #elif defined  EASY
+	#define	LENGTH  9
+	#define WIDE	9
+	#define NUMBER  10
+#else
 	#define	LENGTH  9
 	#define WIDE	9
 	#define NUMBER  10
@@ -162,6 +163,12 @@ void print_block(Content_type (*fp)[LENGTH],Location_type *lfp)
 							printf("★");
 						}
 					}
+					#ifdef AUTO
+					else if((*(fp+i))[j].question_status)
+					{
+						printf("?");
+					}
+					#endif
 					else
 					{
 						print_mine(fp,i,j);	
@@ -342,7 +349,7 @@ void check_first_enter(Content_type (*fp)[LENGTH],Location_type *lfp)
 	} 
 }
 /*AUTO FUNCTION*/
-
+#ifdef AUTO
 int random_open(Content_type (*fp)[LENGTH])
 {
 	Location_type lfp;
@@ -478,13 +485,15 @@ _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number)
 	int i,j;
 	int itmp,jtmp;
 	int itmp2,jtmp2;
+	
 	int unopened_count = 0;
+	int flag_count = 0;
 
 	int question_count = 0;
 	int unquestion_count = 0;
 	int unopened_count_next = 0;
 	int unmine_count = 0;
-	int flag_count = 0;
+	int flag_count_next = 0;
 
 	Location_type tmp_question;
 	Location_type tmp_unquestion[8];
@@ -495,7 +504,18 @@ _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number)
 	{	
 		for(j = 0;j < LENGTH;j++)
 		{	
-			if((*(fp+i))[j].open_status && (*(fp+i))[j].content == mine_number)
+			for(itmp = MAX(i-1,0);itmp <= MIN(i+1,WIDE-1);itmp++)
+			{	
+				for(jtmp = MAX(j-1,0);jtmp <= MIN(j+1,LENGTH-1);jtmp++)
+				{
+					if((*(fp+itmp))[jtmp].flag_status)
+					{
+						flag_count++;
+					}
+				}
+			}
+			
+			if((*(fp+i))[j].open_status && (*(fp+i))[j].content == (mine_number + flag_count))
 			{
 				for(itmp = MAX(i-1,0);itmp <= MIN(i+1,WIDE-1);itmp++)
 				{	
@@ -508,8 +528,13 @@ _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number)
 					}
 				}
 			}
-			if(unopened_count == all_number)
+			
+			if(unopened_count == all_number && unopened_count != 0)
 			{
+				
+				fprintf(stderr,"flag_count     = %d|%d,%d\n",flag_count,i,j);
+				fprintf(stderr,"content        = %d|%d,%d\n",(*(fp+i))[j].content,i,j);
+				fprintf(stderr,"unopened_count = %d|%d,%d\n\n",flag_count,i,j);
 				for(itmp = MAX(i-1,0);itmp <= MIN(i+1,WIDE-1);itmp++)
 				{	
 					for(jtmp = MAX(j-1,0);jtmp <= MIN(j+1,LENGTH-1);jtmp++)
@@ -521,7 +546,7 @@ _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number)
 							(*(fp+itmp))[jtmp].mine_number = mine_number;
 						}
 					}
-				}
+				}/*
 				for(itmp = MAX(i-2,0);itmp <= MIN(i+2,WIDE-1);itmp++)
 				{	
 					for(jtmp = MAX(j-2,0);jtmp <= MIN(j+2,LENGTH-1);jtmp++)
@@ -551,7 +576,7 @@ _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number)
 									}
 									else if((*(fp+itmp2))[jtmp2].flag_status)
 									{
-										flag_count++;
+										flag_count_next++;
 									}
 								}		
 							}
@@ -560,7 +585,7 @@ _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number)
 							{
 								unmine_count =(*(fp+itmp))[jtmp].content 
 									-(*(fp+tmp_question.y))[tmp_question.x].all_number
-									-flag_count;
+									-flag_count_next;
 								if(unmine_count == 0)
 								{
 									while(unquestion_count)
@@ -583,16 +608,20 @@ _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number)
 					question_count = 0;
 					unquestion_count = 0;
 					unmine_count = 0;	
-					flag_count = 0;
+					flag_count_next = 0;
 					}
-				}	
+				}*/	
 			}
+			flag_count = 0;
 			unopened_count = 0;
 			cal_question_clear(fp);
 		}
 	}
 	return result;
 }
+
+#endif
+
 int main(int argc,char *argv[])
 {
 	Location_type User;

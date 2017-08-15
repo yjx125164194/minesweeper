@@ -1,5 +1,6 @@
 #include<stdbool.h>
 
+#define HARD
 #define AUTO
 
 typedef struct Location
