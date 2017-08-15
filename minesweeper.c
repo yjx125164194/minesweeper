@@ -27,7 +27,7 @@
 
 #ifdef AUTO_MODE
 	#define SPEED       100*1000
-	#define TIMES	    10	
+	#define TIMES	    10000	
 #else
 	#define SPEED       500*1000
 	#define TIMES       1
@@ -726,7 +726,7 @@ int main(int argc,char *argv[])
 				nohuman_open(pContent);
 			}	
 		#endif
-			print_block(pContent,pUser);
+			//print_block(pContent,pUser);
 			if(result)
 			{
 			#ifndef AUTO_MODE
@@ -751,7 +751,7 @@ int main(int argc,char *argv[])
 		opened_count = 0;
 		marked_count = 0;
 		AUTO_FIRST_ENTER = true;
-		printf("you win %d times and lose %d times\n",win,lose);
+		printf("you win %d times and lose %d times,win percent = %.3f%%\n",win,lose,(float)(win)/(win+lose)*100);
 #endif	
 	}
 	return 0;
