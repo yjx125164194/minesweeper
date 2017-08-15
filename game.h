@@ -1,6 +1,7 @@
 #include<stdbool.h>
 
 #define HARD
+
 #define AUTO_MODE
 #define WIN7_MODE
 
