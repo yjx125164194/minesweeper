@@ -456,8 +456,7 @@ void nohuman_open(Content_type (*fp)[LENGTH])
 	}
 	if(opened_count == open_count_tmp)
 	{
-		if(1)
-		//if(!cal_open(fp,2,1))
+		if(!cal_open(fp,2,1))
 		{
 			AUTO_NOHUMAN = true;
 			AUTO_RANDOM = false;
@@ -543,10 +542,9 @@ _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number)
 			
 			if(unopened_count == all_number && unopened_count != 0)
 			{
-				
-				fprintf(stderr,"flag_count     = %d|%d,%d\n",flag_count,i,j);
-				fprintf(stderr,"content        = %d|%d,%d\n",(*(fp+i))[j].content,i,j);
-				fprintf(stderr,"unopened_count = %d|%d,%d\n\n",flag_count,i,j);
+				//fprintf(stderr,"flag_count     = %d|%d,%d\n",flag_count,i,j);
+				//fprintf(stderr,"content        = %d|%d,%d\n",(*(fp+i))[j].content,i,j);
+				//fprintf(stderr,"unopened_count = %d|%d,%d\n\n",flag_count,i,j);
 				for(itmp = MAX(i-1,0);itmp <= MIN(i+1,WIDE-1);itmp++)
 				{	
 					for(jtmp = MAX(j-1,0);jtmp <= MIN(j+1,LENGTH-1);jtmp++)
