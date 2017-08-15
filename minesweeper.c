@@ -154,21 +154,24 @@ void print_block(Content_type (*fp)[LENGTH],Location_type *lfp)
 				{
 					if(!(*(fp+i))[j].open_status)
 					{
-						if(!(*(fp+i))[j].flag_status)
+						if(0)
 						{
-							printf("■");
 						}
-						else
+						#ifdef AUTO
+						else if((*(fp+i))[j].question_status)
+						{
+							printf("?");
+						}
+						#endif
+						else if((*(fp+i))[j].flag_status)
 						{
 							printf("★");
 						}
+						else
+						{
+							printf("■");
+						}
 					}
-					#ifdef AUTO
-					else if((*(fp+i))[j].question_status)
-					{
-						printf("?");
-					}
-					#endif
 					else
 					{
 						print_mine(fp,i,j);	
@@ -362,10 +365,18 @@ int random_open(Content_type (*fp)[LENGTH])
 		lfp.x = rand()%LENGTH;
 		lfp.y = rand()%WIDE;
 	}while((*(fp+lfp.y))[lfp.x].open_status);
-	if((result = open_user_location(fp,&lfp)) && auto_first_enter) 
+	
+	if((result = open_user_location(fp,&lfp)) == 1)
 	{
-		init_mine(fp);
-		random_open(fp);
+		if(auto_first_enter)
+		{
+			init_mine(fp);
+			random_open(fp);
+		}
+		else
+		{
+			return result;
+		}
 	}
 	auto_first_enter = false;
 	
@@ -445,7 +456,8 @@ void nohuman_open(Content_type (*fp)[LENGTH])
 	}
 	if(opened_count == open_count_tmp)
 	{
-		if(!cal_open(fp,2,1))
+		if(1)
+		//if(!cal_open(fp,2,1))
 		{
 			AUTO_NOHUMAN = true;
 			AUTO_RANDOM = false;
