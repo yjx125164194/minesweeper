@@ -61,6 +61,46 @@
 int opened_count = 0;
 int marked_count = 0;
 
+
+
+_Bool content_empty_status(Content_type (*fp)[LENGTH],int i,int j)
+{
+	if((*(fp+i))[j].content == empty)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+_Bool content_mine_status(Content_type (*fp)[LENGTH],int i,int j)
+{
+	if((*(fp+i))[j].content == mine)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+_Bool mine_status(Content_type (*fp)[LENGTH],int i,int j)
+{
+	return (*(fp+i))[j].mine_status;
+}
+
+_Bool open_status(Content_type (*fp)[LENGTH],int i,int j)
+{
+	return (*(fp+i))[j].open_status;
+}
+
+_Bool flag_status(Content_type (*fp)[LENGTH],int i,int j)
+{
+	return (*(fp+i))[j].flag_status;
+}
 /*
  * 初始化雷区
  * 第一个参数为雷区的二维数组
@@ -90,7 +130,7 @@ void init_mine(Content_type (*fp)[LENGTH])
 	{
 		x = rand()%WIDE;
 		y = rand()%LENGTH;
-		if((*(fp+x))[y].content == empty)
+		if(content_empty_status(fp,x,y))
 		{
 			(*(fp+x))[y].content = mine;
 			(*(fp+x))[y].mine_status = true;
@@ -105,13 +145,13 @@ void init_mine(Content_type (*fp)[LENGTH])
 	{
 		for(j = 0;j < LENGTH;j++)
 		{
-			if(!(*(fp+i))[j].mine_status)
+			if(!mine_status(fp,i,j))
 			{
 				for(itmp = MAX(i-1,0);itmp <= MIN(i+1,WIDE-1);itmp++)
 				{	
 					for(jtmp = MAX(j-1,0);jtmp <= MIN(j+1,LENGTH-1);jtmp++)
 					{	
-						if((*(fp+itmp))[jtmp].mine_status)
+						if(mine_status(fp,itmp,jtmp))
 						{
 							(*(fp+i))[j].content++;
 						}
@@ -194,7 +234,7 @@ void print_block(Content_type (*fp)[LENGTH],Location_type *lfp)
 			{	
 				if(m == 0 || i != lfp->y || j != lfp->x)			
 				{
-					if(!(*(fp+i))[j].open_status)
+					if(!open_status(fp,i,j))
 					{
 						if(0)
 						{
@@ -205,7 +245,7 @@ void print_block(Content_type (*fp)[LENGTH],Location_type *lfp)
 							printf("?");//当处于AUTO_MODE下时，用来标记cal_open所赋予的怀疑状态
 						}
 						#endif
-						else if((*(fp+i))[j].flag_status)
+						else if(flag_status(fp,i,j))
 						{
 							printf("★");//当被标记为时，打印星号
 						}
@@ -300,10 +340,10 @@ _Bool shift_user_location(Content_type (*fp)[LENGTH],Location_type *pUser,char c
           	  	default:break;
 		}
 		//当上下左右移动遇到被打开的方块且为empty的情况下，继续移动
-		if((*(fp+pUser->y))[pUser->x].open_status)
+		if(open_status(fp,pUser->y,pUser->x))
 		{
-			if((*(fp+pUser->y))[pUser->x].content == empty
-				|| (*(fp+pUser->y))[pUser->x].content == mine)
+			if(content_empty_status(fp,pUser->y,pUser->x)
+				|| content_mine_status(fp,pUser->y,pUser->x))
 			{
 				status = shift_user_location(fp,pUser,ch);
 			}
@@ -335,13 +375,12 @@ int open_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
 	Location_type tmp;
 	
 	//当该坐标未被打开且未被flag标记时执行
-	if((*(fp+lfp->y))[lfp->x].open_status == false 
-		&& (*(fp+lfp->y))[lfp->x].flag_status == false)	
+	if((!open_status(fp,lfp->y,lfp->x)) && (!(flag_status(fp,lfp->y,lfp->x))))
 	{
 		(*(fp+lfp->y))[lfp->x].open_status = true;
 		opened_count++;
 		//当打开的坐标为empty时，将周围八个坐标全部打开
-		if((*(fp+lfp->y))[lfp->x].content == empty)
+		if(content_empty_status(fp,lfp->y,lfp->x))
 		{
 			for(i = MAX(lfp->y-1,0);i <= MIN(lfp->y+1,WIDE-1);i++)
 			{	
@@ -354,7 +393,7 @@ int open_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
 			}
 		}
 		//当打开的坐标为雷时，直接返回1表示游戏结束
-		else if((*(fp+lfp->y))[lfp->x].content == mine)
+		else if(content_mine_status(fp,lfp->y,lfp->x))
 		{
 			return 1;
 		}
@@ -362,14 +401,14 @@ int open_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
 	//当需要被打开的坐标为已打开状态，且为数字的情况下执行
 	else
 	{
-		if((*(fp+lfp->y))[lfp->x].content != empty 
-		&& (*(fp+lfp->y))[lfp->x].content != mine)
+		if((!content_empty_status(fp,lfp->y,lfp->x))
+		&& (!content_mine_status(fp,lfp->y,lfp->x)))
 		{
 			for(i = MAX(lfp->y-1,0);i <= MIN(lfp->y+1,WIDE-1);i++)
 			{	
 				for(j = MAX(lfp->x-1,0);j <= MIN(lfp->x+1,LENGTH-1);j++)
 				{
-					if((*(fp+i))[j].flag_status)
+					if(flag_status(fp,i,j))
 					{
 						flag_count++;
 					} 
@@ -383,8 +422,8 @@ int open_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
 				{	
 					for(j = MAX(lfp->x-1,0);j <= MIN(lfp->x+1,LENGTH-1);j++)
 					{
-						if((*(fp+i))[j].open_status == false 
-							&& (*(fp+i))[j].flag_status == false)	
+						if((!open_status(fp,i,j)) 
+							&& (!flag_status(fp,i,j)))	
 						{
 							tmp.x = j;
 							tmp.y = i;
@@ -411,9 +450,9 @@ void flag_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
 {
 	//当该坐标的方块被标记时，取消标记
 	//当该坐标的方块未被标记时，将其标记
-	if(!(*(fp+lfp->y))[lfp->x].open_status)
+	if(!open_status(fp,lfp->y,lfp->x))
 	{
-		if((*(fp+lfp->y))[lfp->x].flag_status)
+		if(flag_status(fp,lfp->y,lfp->x))
 		{
 			marked_count--;
 		}
@@ -439,9 +478,9 @@ void check_first_enter(Content_type (*fp)[LENGTH],Location_type *lfp)
 //非win7模式为第一个不是雷
 
 #ifdef WIN7_MODE
-	while((*(fp+lfp->y))[lfp->x].content != empty)
+	while(!content_empty_status(fp,lfp->y,lfp->x))
 #else
-	while((*(fp+lfp->y))[lfp->x].content == mine)
+	while(content_mine_status(fp,lfp->y,lfp->x))
 #endif
 	{
 		init_mine(fp);
@@ -483,7 +522,7 @@ int random_open(Content_type (*fp)[LENGTH])
 		{
 			lfp.x = rand()%LENGTH;
 			lfp.y = rand()%WIDE;
-		}while((*(fp+lfp.y))[lfp.x].open_status);
+		}while(open_status(fp,lfp.y,lfp.x));
 	}
 	//当被打开的数量大于总被打开的4/5时，直接按顺序寻找未被打开且未被标记的坐标打开
 	else
@@ -492,7 +531,7 @@ int random_open(Content_type (*fp)[LENGTH])
 		{	
 			for(j = 0;j < LENGTH;j++)
 			{	
-				if((!(*(fp+i))[j].open_status) && (!(*(fp+i))[j].flag_status))
+				if((!open_status(fp,i,j)) && (!flag_status(fp,i,j)))
 				{
 					lfp.x = j;
 					lfp.y = i;
@@ -523,7 +562,8 @@ int random_open(Content_type (*fp)[LENGTH])
 }
 
 _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number);
-
+_Bool _121_open(Content_type (*fp)[LENGTH]);
+_Bool _1221_open(Content_type (*fp)[LENGTH]);
 /*
  * 按照目前的雷区
  * 无脑打开可以被打开的
@@ -545,10 +585,10 @@ void nohuman_open(Content_type (*fp)[LENGTH])
 		for(j = 0;j < LENGTH;j++)
 		{	
 			//检查该方块是否为打开状态
-			if((*(fp+i))[j].open_status)
+			if(open_status(fp,i,j))
 			{
 				//在已经打开的前提，确定该方块内容是否为数字
-				if((*(fp+i))[j].content != empty && (*(fp+i))[j].content != mine)
+				if((!content_empty_status(fp,i,j)) && (!content_mine_status(fp,i,j)))
 				{
 					//当内容是数字时，确定周围8个未被打开的方块中
 					//被标记的雷的数量与未被标记雷的数量
@@ -556,9 +596,9 @@ void nohuman_open(Content_type (*fp)[LENGTH])
 					{	
 						for(jtmp = MAX(j-1,0);jtmp <= MIN(j+1,LENGTH-1);jtmp++)
 						{
-							if(!(*(fp+itmp))[jtmp].open_status)	
+							if(!open_status(fp,itmp,jtmp))	
 							{
-								if(!(*(fp+itmp))[jtmp].flag_status)	
+								if(!flag_status(fp,itmp,jtmp))	
 								{
 									unopened_block++;
 								}
@@ -580,7 +620,7 @@ void nohuman_open(Content_type (*fp)[LENGTH])
 						{	
 							for(jtmp = MAX(j-1,0);jtmp <= MIN(j+1,LENGTH-1);jtmp++)
 							{
-								if((!(*(fp+itmp))[jtmp].open_status) &&(!(*(fp+itmp))[jtmp].flag_status))	
+								if((!open_status(fp,itmp,jtmp)) &&(!flag_status(fp,itmp,jtmp)))	
 								{
 									lfp.x = jtmp;
 									lfp.y = itmp;
@@ -601,7 +641,7 @@ void nohuman_open(Content_type (*fp)[LENGTH])
 	{	
 		for(j = 0;j < LENGTH;j++)
 		{
-			if((*(fp+i))[j].open_status)
+			if(open_status(fp,i,j))
 			{
 				lfp.x = j;
 				lfp.y = i;
@@ -650,11 +690,12 @@ void cal_question_clear(Content_type (*fp)[LENGTH])
 }
 
 
-/*算法考虑三种情况
-2个里有1个
-3个里有1个
-3个里有2个
-即all_number与mine_number组合有以上三种*/
+/*
+ * cal_open算法考虑三种情况
+ * 2个里有1个
+ * 3个里有1个
+ * 3个里有2个
+ * 即all_number与mine_number组合有以上三种*/
 
 /*
  * 推理算法函数
@@ -704,7 +745,7 @@ _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number)
 			{	
 				for(jtmp = MAX(j-1,0);jtmp <= MIN(j+1,LENGTH-1);jtmp++)
 				{
-					if((*(fp+itmp))[jtmp].flag_status)
+					if(flag_status(fp,itmp,jtmp))
 					{
 						flag_count++;
 					}
@@ -715,13 +756,13 @@ _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number)
 			//eg.
 			//
 			//某个1周围未有标记雷，即flag_count = 0，content = 1，mine_number = 1
-			if((*(fp+i))[j].open_status && (*(fp+i))[j].content == (mine_number + flag_count))
+			if(open_status(fp,i,j) && (*(fp+i))[j].content == (mine_number + flag_count))
 			{
 				for(itmp = MAX(i-1,0);itmp <= MIN(i+1,WIDE-1);itmp++)
 				{	
 					for(jtmp = MAX(j-1,0);jtmp <= MIN(j+1,LENGTH-1);jtmp++)
 					{
-						if((!(*(fp+itmp))[jtmp].open_status) && (!(*(fp+itmp))[jtmp].flag_status))	
+						if((!open_status(fp,itmp,jtmp)) && (!flag_status(fp,itmp,jtmp)))	
 						{
 							unopened_count++;
 						}
@@ -739,7 +780,7 @@ _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number)
 						//同时赋值为all_number中选mine_number
 						//eg.
 						//被标记的方块有2个，这2个方块中有1个雷
-						if((!(*(fp+itmp))[jtmp].open_status) && (!(*(fp+itmp))[jtmp].flag_status))	
+						if((!open_status(fp,itmp,jtmp)) && (!flag_status(fp,itmp,jtmp)))	
 						{
 							(*(fp+itmp))[jtmp].question_status = true;
 							(*(fp+itmp))[jtmp].all_number = all_number;
@@ -753,7 +794,8 @@ _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number)
 					for(jtmp = MAX(j-2,0);jtmp <= MIN(j+2,LENGTH-1);jtmp++)
 					{
 						//当方块为已打开状态且为数字时
-						if(((*(fp+itmp))[jtmp].open_status) && ((*(fp+i))[j].content != empty))
+						//if(open_status(fp,i,j) && (!content_empty_status(fp,i,j)))
+						if(open_status(fp,itmp,jtmp) && (!content_empty_status(fp,itmp,jtmp)))
 						{
 							//初始化tmp
 							tmp_question.x = LENGTH + 1;
@@ -763,8 +805,7 @@ _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number)
 								for(jtmp2 = MAX(jtmp-1,0);jtmp2 <= MIN(jtmp+1,LENGTH-1);jtmp2++)
 								{
 									//寻找未打开且未被标记的方块
-									if((!(*(fp+itmp2))[jtmp2].open_status) 
-									&& (!(*(fp+itmp2))[jtmp2].flag_status))	
+									if((!open_status(fp,itmp2,jtmp2)) && (!flag_status(fp,itmp2,jtmp2)))	
 									{
 										unopened_count_next++;
 										//若找到被疑问标记的，计数并将其参数赋予tmp
@@ -783,7 +824,7 @@ _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number)
 										}
 									}
 									//若被标记，则计数
-									else if((*(fp+itmp2))[jtmp2].flag_status)
+									else if(flag_status(fp,itmp2,jtmp2))
 									{
 										flag_count_next++;
 									}
@@ -839,6 +880,113 @@ _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number)
 	}
 	return result;
 }
+
+_Bool _121_open(Content_type (*fp)[LENGTH])
+{
+	int i,j;	
+	int itmp,jtmp;
+	//在这里需要将已标记的雷排除，故将雷区二维数组建立了一个副本
+	//为了编写简单采用tmp[WIDE][LENGTH]形式
+	Content_type tmp[WIDE][LENGTH];
+	_Bool status_121 = false;
+	_Bool status_return = false;
+	enum
+	{
+		null,
+		up_down,
+		left_right
+	}status_dir;
+	
+	status_dir = null;
+
+	//对副本进行初始化并将当前的雷减去
+	for(i = 0;i < WIDE;i++)
+	{	
+		for(j = 0;j < LENGTH;j++)
+		{	
+			tmp[i][j] = (*(fp+i))[j];
+			if(open_status(tmp,i,j) && (!content_empty_status(tmp,i,j)))
+			{
+				for(itmp = MAX(i-1,0);itmp <= MIN(i+1,WIDE-1);itmp++)
+				{	
+					for(jtmp = MAX(j-1,0);jtmp <= MIN(j+1,LENGTH-1);jtmp++)
+					{
+						//此处每次判定时，tmp并未完全将雷区属性拷贝，故还采用fp的属性判断
+						if(flag_status(fp,itmp,jtmp))
+						{
+							tmp[i][j].content--;
+						}
+					}
+				}
+			}
+		}
+	}
+	for(i = 0;i < WIDE;i++)
+	{	
+		for(j = 0;j < LENGTH;j++)
+		{	
+			status_121 = false;
+			status_dir = empty;
+	
+			if(open_status(tmp,i,j) 
+			&& (tmp[i][j].content == 2)
+			&& !(i == 0 && j == 0)
+			&& !(i == 0 && j == LENGTH - 1)
+			&& !(i == WIDE - 1 && j == 0)
+			&& !(i == WIDE - 1 && j == LENGTH - 1))//当打开的内容为2且该点不在四个角上进入条件执行
+			{
+				//当该点在最上行或最下行时判定左右
+				if(i == 0 || i == WIDE - 1)	
+				{
+					if((tmp[i][j-1].content == 1) && tmp[i][j+1].content == 1)
+					{
+						status_121 = true;
+						status_dir = left_right;
+					}
+				}
+				//当该点在最左行或最右行时判定上下
+				else if(j == 0 || j == LENGTH - 1)
+				{
+					if((tmp[i-1][j].content == 1) && tmp[i+1][j].content == 1)
+					{
+						status_121 = true;
+						status_dir = up_down;
+					}
+				}
+				else
+				{
+					if((tmp[i-1][j].content == 1) && tmp[i+1][j].content == 1)
+					{
+						status_121 = true;
+						status_dir = up_down;
+					}
+					else if((tmp[i][j-1].content == 1) && tmp[i][j+1].content == 1)
+					{
+						status_121 = true;
+						status_dir = left_right;
+					}
+				}
+			}
+			if(status_121)	
+			{
+				if(status_dir == up_down)
+				{
+				}
+				else if(status_dir == left_right)
+				{
+				}
+			}
+		}
+	}
+	return status_return;
+}
+
+_Bool _1221_open(Content_type (*fp)[LENGTH])
+{
+	
+}
+
+
 
 #endif
 
