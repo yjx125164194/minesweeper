@@ -2,6 +2,7 @@
 #include<stdio.h>
 #include<malloc.h>
 #include<stdlib.h>
+#include<time.h>
 #include"game.h"
 
 /*
@@ -36,8 +37,8 @@
  */
  
 #ifdef AUTO_MODE
-	#define SPEED       500*1000
-	#define TIMES	    200000
+	#define SPEED       100*1000
+	#define TIMES	    500000
 #else
 	#define SPEED       500*1000
 	#define TIMES       1
@@ -1099,8 +1100,11 @@ int main(int argc,char *argv[])
 	char ch;
 	int result = 0;
 	_Bool first_enter = true;
-	
 	int times = 0;
+//定义运行时间
+	clock_t mine_start;
+	clock_t mine_stop;
+	double mine_time;
 #ifdef AUTO_MODE
 	int win = 0;
 	int lose = 0;
@@ -1109,7 +1113,8 @@ int main(int argc,char *argv[])
 	User.x = LENGTH/2;
 	pContent = &Content[0];
 	pUser = &User;
- 	//重置随机种子
+ 	
+	//重置随机种子
 	srand((unsigned int) time(0));
 	
 	#ifndef AUTO_MODE	
@@ -1117,6 +1122,7 @@ int main(int argc,char *argv[])
 	#endif
 	//非AUTO_MODE下TIMES为1，即用户可以玩1次
 	//AUTO_MODE下TIMES在define中定义，用于多次扫雷求胜率
+	mine_start = clock();
 	for(times = 0;times < TIMES;times++)
 	{
 		init_mine(pContent);	
@@ -1193,8 +1199,19 @@ int main(int argc,char *argv[])
 		opened_count = 0;
 		marked_count = 0;
 		AUTO_FIRST_ENTER = true;
-		printf("you win %d times and lose %d times,win percent = %.3f%%\n",win,lose,(float)(win)/(win+lose)*100);
+		//printf("you win %d times and lose %d times,win percent = %.3f%%\n",win,lose,(float)(win)/(win+lose)*100);
 #endif	
 	}
+	mine_stop = clock();
+	mine_time = (double)(mine_stop - mine_start) / CLOCKS_PER_SEC;    
+#ifndef AUTO_MODE   	
+	printf( "you used %f seconds\n",mine_time);
+#else
+	
+	printf("Finished!\nyou calculate %d times\nwin %d times\nlose %d times\nwin percent %.3f%%\n",
+		times,win,lose,(float)(win)/(win+lose)*100);
+	printf( "use %.5f seconds\naverage use %.5f seconds\none second can solve %.5f times\n",
+		mine_time,mine_time/(double)times,(double)times/mine_time); 
+#endif
 	return 0;
 }
