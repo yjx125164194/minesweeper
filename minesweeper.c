@@ -36,8 +36,8 @@
  */
  
 #ifdef AUTO_MODE
-	#define SPEED       100*1000
-	#define TIMES	    10000	
+	#define SPEED       500*1000
+	#define TIMES	    10
 #else
 	#define SPEED       500*1000
 	#define TIMES       1
@@ -60,8 +60,6 @@
 
 int opened_count = 0;
 int marked_count = 0;
-
-
 
 _Bool content_empty_status(Content_type (*fp)[LENGTH],int i,int j)
 {
@@ -655,8 +653,7 @@ void nohuman_open(Content_type (*fp)[LENGTH])
 		//若调用cal_open系列函数，雷区opened_count依旧没有变化
 		//则在main的主循环处，关闭该函数实现
 		//同时打开随机打开函数的全局变量
-
-		if((!cal_open(fp,2,1)) && (!cal_open(fp,3,1)) && (!cal_open(fp,3,2)))
+		if((!_121_open(fp)) && (!cal_open(fp,2,1)) && (!cal_open(fp,3,1)) && (!cal_open(fp,3,2)))
 		{
 			AUTO_MODE_NOHUMAN = true;
 			AUTO_MODE_RANDOM = false;
@@ -794,7 +791,6 @@ _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number)
 					for(jtmp = MAX(j-2,0);jtmp <= MIN(j+2,LENGTH-1);jtmp++)
 					{
 						//当方块为已打开状态且为数字时
-						//if(open_status(fp,i,j) && (!content_empty_status(fp,i,j)))
 						if(open_status(fp,itmp,jtmp) && (!content_empty_status(fp,itmp,jtmp)))
 						{
 							//初始化tmp
@@ -888,8 +884,9 @@ _Bool _121_open(Content_type (*fp)[LENGTH])
 	//在这里需要将已标记的雷排除，故将雷区二维数组建立了一个副本
 	//为了编写简单采用tmp[WIDE][LENGTH]形式
 	Content_type tmp[WIDE][LENGTH];
+	Location_type ltmp;
 	_Bool status_121 = false;
-	_Bool status_return = false;
+	_Bool status_result = false;
 	enum
 	{
 		null,
@@ -971,14 +968,106 @@ _Bool _121_open(Content_type (*fp)[LENGTH])
 			{
 				if(status_dir == up_down)
 				{
+					if(j == LENGTH - 1)
+					{
+						if((!open_status(tmp,i-1,j-1)) && (!flag_status(tmp,i-1,j-1))	
+							&&(!open_status(tmp,i,j-1)) && (!flag_status(tmp,i,j-1))	
+							&&(!open_status(tmp,i+1,j-1)) && (!flag_status(tmp,i+1,j-1)))
+						{
+							ltmp.x = j - 1;
+							ltmp.y = i;
+							open_user_location(fp,&ltmp);
+							status_result = true;
+						}	
+					}
+					else if(j == 0)
+					{
+						if((!open_status(tmp,i-1,j+1)) && (!flag_status(tmp,i-1,j+1))	
+							&&(!open_status(tmp,i,j+1)) && (!flag_status(tmp,i,j+1))	
+							&&(!open_status(tmp,i+1,j+1)) && (!flag_status(tmp,i+1,j+1)))
+						{
+							ltmp.x = j + 1;
+							ltmp.y = i;
+							open_user_location(fp,&ltmp);
+							status_result = true;
+						}	
+					}
+					else
+					{
+						if((!open_status(tmp,i-1,j-1)) && (!flag_status(tmp,i-1,j-1))	
+							&&(!open_status(tmp,i,j-1)) && (!flag_status(tmp,i,j-1))	
+							&&(!open_status(tmp,i+1,j-1)) && (!flag_status(tmp,i+1,j-1)))
+						{
+							ltmp.x = j - 1;
+							ltmp.y = i;
+							open_user_location(fp,&ltmp);
+							status_result = true;
+						}
+						else if((!open_status(tmp,i-1,j+1)) && (!flag_status(tmp,i-1,j+1))	
+							&&(!open_status(tmp,i,j+1)) && (!flag_status(tmp,i,j+1))	
+							&&(!open_status(tmp,i+1,j+1)) && (!flag_status(tmp,i+1,j+1)))
+						{
+							ltmp.x = j + 1;
+							ltmp.y = i;
+							open_user_location(fp,&ltmp);
+							status_result = true;
+						}
+					}
 				}
 				else if(status_dir == left_right)
 				{
+					if(i == WIDE - 1)
+					{
+						if((!open_status(tmp,i-1,j-1)) && (!flag_status(tmp,i-1,j-1))	
+							&&(!open_status(tmp,i-1,j)) && (!flag_status(tmp,i-1,j))	
+							&&(!open_status(tmp,i-1,j+1)) && (!flag_status(tmp,i-1,j+1)))
+						{
+							ltmp.x = j;
+							ltmp.y = i - 1;
+							open_user_location(fp,&ltmp);
+							status_result = true;
+						}	
+					}
+					else if(i == 0)
+					{
+						if((!open_status(tmp,i+1,j-1)) && (!flag_status(tmp,i+1,j-1))	
+							&&(!open_status(tmp,i+1,j)) && (!flag_status(tmp,i+1,j))	
+							&&(!open_status(tmp,i+1,j+1)) && (!flag_status(tmp,i+1,j+1)))
+						{
+							ltmp.x = j;
+							ltmp.y = i + 1;
+							open_user_location(fp,&ltmp);
+							status_result = true;
+						}	
+					}
+					else
+					{
+						if((!open_status(tmp,i-1,j-1)) && (!flag_status(tmp,i-1,j-1))	
+							&&(!open_status(tmp,i-1,j)) && (!flag_status(tmp,i-1,j))	
+							&&(!open_status(tmp,i-1,j+1)) && (!flag_status(tmp,i-1,j+1)))
+						{
+							ltmp.x = j;
+							ltmp.y = i - 1;
+							open_user_location(fp,&ltmp);
+							status_result = true;
+						}
+						else if((!open_status(tmp,i+1,j-1)) && (!flag_status(tmp,i+1,j-1))	
+							&&(!open_status(tmp,i+1,j)) && (!flag_status(tmp,i+1,j))	
+							&&(!open_status(tmp,i+1,j+1)) && (!flag_status(tmp,i+1,j+1)))
+						{
+							ltmp.x = j;
+							ltmp.y = i + 1;
+							open_user_location(fp,&ltmp);
+							status_result = true;
+						}	
+	
+					}
+
 				}
 			}
 		}
 	}
-	return status_return;
+	return status_result;
 }
 
 _Bool _1221_open(Content_type (*fp)[LENGTH])
@@ -1077,6 +1166,7 @@ int main(int argc,char *argv[])
 				printf("You open the mine and failed!\n");
 			#else	
 				lose++;
+				print_block(pContent,pUser);
 			#endif
 				break;
 			}
