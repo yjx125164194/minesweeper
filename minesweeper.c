@@ -37,7 +37,7 @@
  
 #ifdef AUTO_MODE
 	#define SPEED       500*1000
-	#define TIMES	    10
+	#define TIMES	    200000
 #else
 	#define SPEED       500*1000
 	#define TIMES       1
@@ -225,7 +225,7 @@ void print_block(Content_type (*fp)[LENGTH],Location_type *lfp)
 
 	for(m = 0;m < Loop_count;m++)
 	{
-		system("clear");//清除屏幕	
+		//system("clear");//清除屏幕	
 		for(i = 0;i < WIDE;i++)
 		{
 			for(j = 0;j < LENGTH;j++)
@@ -935,7 +935,7 @@ _Bool _121_open(Content_type (*fp)[LENGTH])
 				//当该点在最上行或最下行时判定左右
 				if(i == 0 || i == WIDE - 1)	
 				{
-					if((tmp[i][j-1].content == 1) && tmp[i][j+1].content == 1)
+					if((tmp[i][j-1].content == 1) && (tmp[i][j+1].content == 1))
 					{
 						status_121 = true;
 						status_dir = left_right;
@@ -944,7 +944,7 @@ _Bool _121_open(Content_type (*fp)[LENGTH])
 				//当该点在最左行或最右行时判定上下
 				else if(j == 0 || j == LENGTH - 1)
 				{
-					if((tmp[i-1][j].content == 1) && tmp[i+1][j].content == 1)
+					if((tmp[i-1][j].content == 1) && (tmp[i+1][j].content == 1))
 					{
 						status_121 = true;
 						status_dir = up_down;
@@ -952,12 +952,12 @@ _Bool _121_open(Content_type (*fp)[LENGTH])
 				}
 				else
 				{
-					if((tmp[i-1][j].content == 1) && tmp[i+1][j].content == 1)
+					if((tmp[i-1][j].content == 1) && (tmp[i+1][j].content == 1))
 					{
 						status_121 = true;
 						status_dir = up_down;
 					}
-					else if((tmp[i][j-1].content == 1) && tmp[i][j+1].content == 1)
+					else if((tmp[i][j-1].content == 1) && (tmp[i][j+1].content == 1))
 					{
 						status_121 = true;
 						status_dir = left_right;
@@ -1145,7 +1145,8 @@ int main(int argc,char *argv[])
 						exit(0);
 					default:break;
 				}
-			}	
+			}
+			print_block(pContent,pUser);
 		#else	
 			//AUTO_MODE模式下，随机打开与无脑打开两个函数交替执行，执行规律在函数内定义
 			if(!AUTO_MODE_RANDOM)
@@ -1158,7 +1159,6 @@ int main(int argc,char *argv[])
 			}	
 		#endif
 			//打印所有雷区
-			//print_block(pContent,pUser);
 			if(result)
 			{
 			//扫雷失败
@@ -1166,7 +1166,7 @@ int main(int argc,char *argv[])
 				printf("You open the mine and failed!\n");
 			#else	
 				lose++;
-				print_block(pContent,pUser);
+				//print_block(pContent,pUser);
 			#endif
 				break;
 			}
