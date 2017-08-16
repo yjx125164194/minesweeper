@@ -225,7 +225,9 @@ void print_block(Content_type (*fp)[LENGTH],Location_type *lfp)
 
 	for(m = 0;m < Loop_count;m++)
 	{
-		//system("clear");//清除屏幕	
+		#ifndef AUTO_MODE
+			system("clear");//清除屏幕	
+		#endif
 		for(i = 0;i < WIDE;i++)
 		{
 			for(j = 0;j < LENGTH;j++)
@@ -952,6 +954,7 @@ _Bool _121_open(Content_type (*fp)[LENGTH])
 				}
 				else
 				{
+					//上下左右均判定
 					if((tmp[i-1][j].content == 1) && (tmp[i+1][j].content == 1))
 					{
 						status_121 = true;
@@ -964,10 +967,13 @@ _Bool _121_open(Content_type (*fp)[LENGTH])
 					}
 				}
 			}
-			if(status_121)	
+			if(status_121)//如果符合121范式判定
 			{
 				if(status_dir == up_down)
 				{
+					//如果是上下结构，且121在最左边或最右边则只判定一边的情况，若不在最左最右则判定两边的情况
+					//当某一边三个都没标记为雷且都是未打开状态时将中间的打开
+					//左右结构同理
 					if(j == LENGTH - 1)
 					{
 						if((!open_status(tmp,i-1,j-1)) && (!flag_status(tmp,i-1,j-1))	
@@ -1106,7 +1112,7 @@ int main(int argc,char *argv[])
  	//重置随机种子
 	srand((unsigned int) time(0));
 	
-	#ifdef AUTO_MODE	
+	#ifndef AUTO_MODE	
 		printf("Print any key to start the game\n");
 	#endif
 	//非AUTO_MODE下TIMES为1，即用户可以玩1次
