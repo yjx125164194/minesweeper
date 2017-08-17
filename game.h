@@ -34,6 +34,7 @@ typedef struct BlockContent
 	enum MineContent content;
 #ifdef AUTO_MODE
 	_Bool question_status;
+	_Bool question_mine;
 	int   all_number;
 	int   mine_number;
 #endif	

@@ -37,8 +37,8 @@
  */
  
 #ifdef AUTO_MODE
-	#define SPEED       100*1000
-	#define TIMES	    500000
+	#define SPEED       1000*1000
+	#define TIMES	    100
 #else
 	#define SPEED       500*1000
 	#define TIMES       1
@@ -61,6 +61,36 @@
 
 int opened_count = 0;
 int marked_count = 0;
+
+int g_combine_result[80][8];
+int g_combine_tmp[8];
+int g_combine_count = 0;
+int g_combine_end;
+void combine(int m,int n)
+{
+	int i,j;
+	for(i = m;i >= n;i--)
+	{
+		g_combine_tmp[n - 1] = i;
+		if(n > 1)
+		{
+			combine(i-1,n-1);
+		}
+		else
+		{
+			for(j = 0;j < g_combine_end;j++)
+			{
+				g_combine_result[g_combine_count][j] = g_combine_tmp[j];
+			}
+			g_combine_count++;
+		}
+	}
+}
+
+int content_number(Content_type (*fp)[LENGTH],int i,int j)
+{
+	return ((*(fp+i))[j].content);
+}
 
 _Bool content_empty_status(Content_type (*fp)[LENGTH],int i,int j)
 {
@@ -563,6 +593,7 @@ int random_open(Content_type (*fp)[LENGTH])
 }
 
 _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number);
+_Bool ana_open(Content_type (*fp)[LENGTH]);
 _Bool _121_open(Content_type (*fp)[LENGTH]);
 _Bool _1221_open(Content_type (*fp)[LENGTH]);
 /*
@@ -879,7 +910,198 @@ _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number)
 	}
 	return result;
 }
+_Bool ana_open(Content_type (*fp)[LENGTH])
+{
+	int i,j;
+	int itmp,jtmp;
+	int itmp2,jtmp2;
 
+	Location_type empty[8];
+	int empty_n;
+	int mine_n;
+	
+	int combine_i;
+	int combine_j;
+	int tmp;
+	
+	int empty_tmp;
+	int mine_tmp;	
+	int unquestion_tmp;
+	Location_type unquestion[8];
+	
+	_Bool right_result;
+	_Bool right_status;
+	_Bool right_exe;
+	_Bool return_status = false;
+	Location_type waitflag[15];
+	int waitflag_n;
+	
+	for(i = 0;i < WIDE;i++)
+	{	
+		for(j = 0;j < LENGTH;j++)
+		{	
+			empty_n = 0;
+			mine_n = 0;
+			if(open_status(fp,i,j) && (!content_empty_status(fp,i,j)))
+			{
+				mine_n = content_number(fp,i,j);
+				for(itmp = MAX(i-1,0);itmp <= MIN(i+1,WIDE-1);itmp++)
+				{	
+					for(jtmp = MAX(j-1,0);jtmp <= MIN(j+1,LENGTH-1);jtmp++)
+					{
+						if((!open_status(fp,itmp,jtmp)) && (!flag_status(fp,itmp,jtmp)))
+						{
+							empty[empty_n].x = jtmp;
+							empty[empty_n++].y = itmp;
+						}
+						else if(flag_status(fp,itmp,jtmp))
+						{
+							mine_n--;
+						}
+					}
+				}
+			}
+			g_combine_count = 0;
+			g_combine_end = mine_n;
+			waitflag_n = 0;
+			if(mine_n < empty_n)
+			{
+				right_result = false;
+				combine(empty_n,mine_n);
+				for(combine_i = 0;combine_i < g_combine_count;combine_i++)
+				{
+					right_status = true;
+					right_exe = false;
+					for(combine_j = 0;combine_j < mine_n;combine_j++)
+					{
+						tmp = g_combine_result[combine_i][combine_j];
+						(*(fp+empty[tmp-1].y))[empty[tmp-1].x].question_status = true;
+						(*(fp+empty[tmp-1].y))[empty[tmp-1].x].question_mine = true;
+					}
+					for(itmp = MAX(i-1,0);itmp <= MIN(i+1,WIDE-1);itmp++)
+					{	
+						for(jtmp = MAX(j-1,0);jtmp <= MIN(j+1,LENGTH-1);jtmp++)
+						{
+							if(!((*(fp+itmp))[jtmp].question_status))
+							{
+								(*(fp+itmp))[jtmp].question_status = true;
+								(*(fp+itmp))[jtmp].question_mine = false;
+							}
+						}
+					}
+					for(itmp = MAX(i-2,0);itmp <= MIN(i+2,WIDE-1);itmp++)
+					{	
+						for(jtmp = MAX(j-2,0);jtmp <= MIN(j+2,LENGTH-1);jtmp++)
+						{
+							if(open_status(fp,itmp,jtmp) && !content_empty_status(fp,itmp,jtmp) && right_status)
+							{
+								unquestion_tmp = 0;
+								empty_tmp = 0;
+								mine_tmp = 0;
+								right_exe = true;
+								for(itmp2 = MAX(itmp-1,0);itmp2 <= MIN(itmp+1,WIDE-1);itmp2++)
+								{	
+									for(jtmp2 = MAX(jtmp-1,0);jtmp2 <= MIN(jtmp+1,LENGTH-1);jtmp2++)
+									{
+										if((!open_status(fp,itmp2,jtmp2))
+										 && (!flag_status(fp,itmp2,jtmp2)))
+										{
+											if(!(*(fp+itmp2))[jtmp2].question_status)
+											{
+												unquestion[unquestion_tmp].x = jtmp2;
+												unquestion[unquestion_tmp].y = itmp2;
+												unquestion_tmp++;
+											}
+											else if(!(*(fp+itmp2))[jtmp2].question_mine)
+											{
+												empty_tmp++;
+											}
+											else
+											{
+												mine_tmp++;
+											}
+										}
+										else
+										{
+											mine_tmp++;
+										}
+
+									}
+								}
+								printf("%d,%d|%d|%d\n",itmp,jtmp,content_number(fp,itmp,jtmp),mine_tmp);
+								if(content_number(fp,itmp,jtmp) < mine_tmp)
+								{
+									right_status = false;
+								}
+								else if(content_number(fp,itmp,jtmp) == mine_tmp)
+								{
+									for(itmp2 = 0;itmp2 < unquestion_tmp;itmp2++)
+									{
+										(*(fp+unquestion[itmp2].y))[unquestion[itmp2].x]
+														.question_status = true;
+										(*(fp+unquestion[itmp2].y))[unquestion[itmp2].x]
+														.question_mine = false;
+									}
+								}
+								else
+								{
+									if(unquestion_tmp == content_number(fp,itmp,jtmp) - mine_tmp)
+									{
+										for(itmp2 = 0;itmp2 < unquestion_tmp;itmp2++)
+										{
+											(*(fp+unquestion[itmp2].y))[unquestion[itmp2].x]
+															.question_status = true;
+											(*(fp+unquestion[itmp2].y))[unquestion[itmp2].x]
+															.question_mine = true;
+										}
+									}
+									else
+									{
+										right_status = false;
+									}
+								}
+							}
+						}
+					}
+					if(right_status && right_result)
+					{
+						right_result = false;
+						right_status = false;
+					}
+					else if(right_status && !right_result && right_exe)
+					{
+						right_result = true;
+						for(itmp = MAX(i-2,0);itmp <= MIN(i+2,WIDE-1);itmp++)
+						{	
+							for(jtmp = MAX(j-2,0);jtmp <= MIN(j+2,LENGTH-1);jtmp++)
+							{
+								if((*(fp+unquestion[itmp].y))[unquestion[itmp].x].question_status == true
+								&& (*(fp+unquestion[itmp].y))[unquestion[itmp].x].question_mine == true)
+								{
+									waitflag[waitflag_n].x = jtmp;
+									waitflag[waitflag_n].y = itmp;
+									waitflag_n++;
+								}
+
+							}
+						}
+					}
+					cal_question_clear(fp);
+				}
+				if(right_result)
+				{
+					for(itmp = 0;itmp < waitflag_n;i++)
+					{
+						flag_user_location(fp,&(waitflag[waitflag_n]));
+					}
+					return_status = true;
+				}
+			}
+		}
+	}
+	return return_status;
+	
+}
 _Bool _121_open(Content_type (*fp)[LENGTH])
 {
 	int i,j;	
@@ -1178,7 +1400,7 @@ int main(int argc,char *argv[])
 				printf("You open the mine and failed!\n");
 			#else	
 				lose++;
-				//print_block(pContent,pUser);
+				print_block(pContent,pUser);
 			#endif
 				break;
 			}
