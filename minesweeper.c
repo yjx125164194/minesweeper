@@ -38,7 +38,7 @@
  
 #ifdef AUTO_MODE
 	#define SPEED       500*1000
-	#define TIMES	    10000
+	#define TIMES	    200000
 #else
 	#define SPEED       500*1000
 	#define TIMES       1
@@ -690,22 +690,13 @@ void nohuman_open(Content_type (*fp)[LENGTH])
 	//若经历上述两个步骤，雷区所有opened_count没有变化，则调用cal_open
 	if(opened_count == open_count_tmp)
 	{
-		//若调用cal_open系列函数，雷区opened_count依旧没有变化
+		//若调用ana_open系列函数，雷区opened_count依旧没有变化
 		//则在main的主循环处，关闭该函数实现
 		//同时打开随机打开函数的全局变量
-		//if((!cal_open(fp,2,1)) && (!cal_open(fp,3,1)) && (!cal_open(fp,3,2)))
 		if(!ana_open(fp))
 		{
-			//if((!ana_open(fp)))
-			if(1)
-			{
-				AUTO_MODE_NOHUMAN = true;
-				AUTO_MODE_RANDOM = false;
-			}
-			else
-			{
-				AUTO_MODE_NOHUMAN = false;
-			}
+			AUTO_MODE_NOHUMAN = true;
+			AUTO_MODE_RANDOM = false;
 		}
 		else
 		{	
@@ -734,197 +725,14 @@ void cal_question_clear(Content_type (*fp)[LENGTH])
 		}
 	}
 }
-
-
 /*
- * cal_open算法考虑三种情况
- * 2个里有1个
- * 3个里有1个
- * 3个里有2个
- * 即all_number与mine_number组合有以上三种*/
-
-/*
- * 推理算法函数
- * 当N个里有M个雷时，推理附近区域某个雷是雷还是空
- *
- * 第一个参数为雷区的二维数组
- * 第二个参数为N选M中的N
- * 第三个参数为N选M中的M
- *
- * 返回值为是否找到类似的位置并对其判定是或非雷，若有成功判定返回true
- *
- * 函数注释以2选1为例
- *
- * eg.
- * 当处于以下情况或类似情况时（其中某个1为边界）
- *      ■■■┇
- *      121┇
- * 可以推断2上为非雷的函数
+ *判断输入的坐标数组中，是否有某个坐标在每一列都有
+ *有的话则返回true，反之false
+ *第一个参数输入坐标二维数组
+ *第二个参数输入所有合法列中最小的长度
+ *第三个参数输入合法列的数量
  */
 
-
-_Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number)
-{
-	int i,j;
-	int itmp,jtmp;
-	int itmp2,jtmp2;
-	
-	int unopened_count = 0;
-	int flag_count = 0;
-
-	int question_count = 0;
-	int unquestion_count = 0;
-	int unopened_count_next = 0;
-	int unmine_count = 0;
-	int flag_count_next = 0;
-
-	Location_type tmp_question;
-	Location_type tmp_unquestion[8];
-
-	_Bool result = false;
-
-	for(i = 0;i < WIDE;i++)
-	{	
-		for(j = 0;j < LENGTH;j++)
-		{	
-			for(itmp = MAX(i-1,0);itmp <= MIN(i+1,WIDE-1);itmp++)
-			{	
-				for(jtmp = MAX(j-1,0);jtmp <= MIN(j+1,LENGTH-1);jtmp++)
-				{
-					if(flag_status(fp,itmp,jtmp))
-					{
-						flag_count++;
-					}
-				}
-			}
-			
-			//当某个方块为打开的情况时，该方块周围缺少mine_number个雷标记时执行
-			//eg.
-			//
-			//某个1周围未有标记雷，即flag_count = 0，content = 1，mine_number = 1
-			if(open_status(fp,i,j) && (*(fp+i))[j].content == (mine_number + flag_count))
-			{
-				for(itmp = MAX(i-1,0);itmp <= MIN(i+1,WIDE-1);itmp++)
-				{	
-					for(jtmp = MAX(j-1,0);jtmp <= MIN(j+1,LENGTH-1);jtmp++)
-					{
-						if((!open_status(fp,itmp,jtmp)) && (!flag_status(fp,itmp,jtmp)))	
-						{
-							unopened_count++;
-						}
-					}
-				}
-			}
-			//当该方块周围有all_number个方块未被打开且未被标记时执行
-			if(unopened_count == all_number && unopened_count != 0)
-			{
-				for(itmp = MAX(i-1,0);itmp <= MIN(i+1,WIDE-1);itmp++)
-				{	
-					for(jtmp = MAX(j-1,0);jtmp <= MIN(j+1,LENGTH-1);jtmp++)
-					{
-						//将所有符合条件的方块附加内容，即标记疑问状态
-						//同时赋值为all_number中选mine_number
-						//eg.
-						//被标记的方块有2个，这2个方块中有1个雷
-						if((!open_status(fp,itmp,jtmp)) && (!flag_status(fp,itmp,jtmp)))	
-						{
-							(*(fp+itmp))[jtmp].question_status = true;
-							(*(fp+itmp))[jtmp].all_number = all_number;
-							(*(fp+itmp))[jtmp].mine_number = mine_number;
-						}
-					}
-				}
-				//对以方块为中心，周围5X5的范围内进行寻找数字
-				for(itmp = MAX(i-2,0);itmp <= MIN(i+2,WIDE-1);itmp++)
-				{	
-					for(jtmp = MAX(j-2,0);jtmp <= MIN(j+2,LENGTH-1);jtmp++)
-					{
-						//当方块为已打开状态且为数字时
-						if(open_status(fp,itmp,jtmp) && (!content_empty_status(fp,itmp,jtmp)))
-						{
-							//初始化tmp
-							tmp_question.x = LENGTH + 1;
-							tmp_question.y = WIDE + 1;
-							for(itmp2 = MAX(itmp-1,0);itmp2 <= MIN(itmp+1,WIDE-1);itmp2++)
-							{	
-								for(jtmp2 = MAX(jtmp-1,0);jtmp2 <= MIN(jtmp+1,LENGTH-1);jtmp2++)
-								{
-									//寻找未打开且未被标记的方块
-									if((!open_status(fp,itmp2,jtmp2)) && (!flag_status(fp,itmp2,jtmp2)))	
-									{
-										unopened_count_next++;
-										//若找到被疑问标记的，计数并将其参数赋予tmp
-										if((*(fp+itmp2))[jtmp2].question_status)
-										{
-											tmp_question.x = jtmp2;
-											tmp_question.y = itmp2;
-											question_count++;	
-										}	
-										//若方块未被疑问标记，计数并详细记录坐标
-										else
-										{
-											tmp_unquestion[unquestion_count].x = jtmp2;
-											tmp_unquestion[unquestion_count].y = itmp2;
-											unquestion_count++;
-										}
-									}
-									//若被标记，则计数
-									else if(flag_status(fp,itmp2,jtmp2))
-									{
-										flag_count_next++;
-									}
-								}		
-							}
-							//若在5X5的某个数字中
-							//找到了所有被疑问标记的方块
-							//且除了这些被标记的疑问方块，还有未被疑问标记，未被标记的未打开方块时执行
-							//
-							//即符合推理条件
-							if((tmp_question.x != LENGTH + 1)
-  								&& (tmp_question.y != WIDE + 1)
-  								&& (question_count == (*(fp+tmp_question.y))[tmp_question.x].all_number)
-								&& (unopened_count_next > question_count))
-							{
-								//未被疑问标记方块中包含的雷的数量
-								unmine_count =(*(fp+itmp))[jtmp].content 
-									-(*(fp+tmp_question.y))[tmp_question.x].mine_number
-									-flag_count_next;
-
-								//未被疑问标记方块中无雷，全部打开
-								if(unmine_count == 0)
-								{
-									while(unquestion_count)
-									{
-										open_user_location(fp,&tmp_unquestion[--unquestion_count]);
-										result = true;
-									}
-								}
-								//未被疑问标记方块中均为雷，全部标记
-								else if(unmine_count == unquestion_count)
-								{
-									while(unquestion_count)
-									{
-										flag_user_location(fp,&tmp_unquestion[--unquestion_count]);
-										result = true;
-									}
-								}
-							}
-						}
-						unopened_count_next = 0;
-						question_count = 0;
-						unquestion_count = 0;
-						unmine_count = 0;	
-						flag_count_next = 0;
-					}
-				}	
-			}
-			flag_count = 0;
-			unopened_count = 0;
-			cal_question_clear(fp);
-		}
-	}
-	return result;
-}
 
 _Bool location_equal(Location_type (*lfp)[9],int waitflag_n, int right_way)
 {
@@ -981,7 +789,9 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 	
 	_Bool return_status = false;
 	Location_type waitflag[9][9];
+	Location_type waitopen[9][9];
 	int waitflag_n[9];
+	int waitopen_n[9];
 	
 	for(i = 0;i < WIDE;i++)
 	{	
@@ -1018,6 +828,8 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 				{
 					waitflag[itmp][jtmp].x = -1;
 					waitflag[itmp][jtmp].y = -1;
+					waitopen[itmp][jtmp].x = -1;
+					waitopen[itmp][jtmp].y = -1;
 				}
 			}
 
@@ -1120,6 +932,7 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 					if(right_status && right_exe)
 					{
 						waitflag_n[right_way] = 0;
+						waitopen_n[right_way] = 0;
 						for(itmp = MAX(i-3,0);itmp <= MIN(i+3,WIDE-1);itmp++)
 						{	
 							for(jtmp = MAX(j-3,0);jtmp <= MIN(j+3,LENGTH-1);jtmp++)
@@ -1131,6 +944,14 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 									waitflag[waitflag_n[right_way]][right_way].y = itmp;
 									waitflag_n[right_way]++;
 								}
+								else if((*(fp+itmp))[jtmp].question_status == true
+								&& (*(fp+itmp))[jtmp].question_mine == false)
+								{
+									waitopen[waitopen_n[right_way]][right_way].x = jtmp;
+									waitopen[waitopen_n[right_way]][right_way].y = itmp;
+									waitopen_n[right_way]++;
+								}
+
 							}
 						}
 						right_way++;
@@ -1141,13 +962,21 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 				for(itmp = 0;itmp < right_way;itmp++)
 				{
 					waitflag_n[0] = MIN(waitflag_n[0],waitflag_n[itmp]);
+					waitopen_n[0] = MIN(waitopen_n[0],waitopen_n[itmp]);
 				}
 				for(itmp = 0;itmp < waitflag_n[0];itmp++)
 				{
 					if(location_equal(waitflag,itmp,right_way))
 					{
 						flag_user_location(fp,&(waitflag[itmp][0]));
-						//print_block(fp,&waitflag[0][0]);
+						return_status = true;
+					}
+				}
+				for(itmp = 0;itmp < waitopen_n[0];itmp++)
+				{
+					if(location_equal(waitopen,itmp,right_way))
+					{
+						open_user_location(fp,&(waitopen[itmp][0]));
 						return_status = true;
 					}
 				}
