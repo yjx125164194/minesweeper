@@ -57,12 +57,13 @@
 	_Bool AUTO_MODE_NOHUMAN    = false;
 	_Bool AUTO_FIRST_ENTER     = true;
 	int   random_times 	   = 0;
+	#define RIGHT_WAY 	   40
 #endif	
 
 int opened_count = 0;
 int marked_count = 0;
 
-int g_combine_result[80][8];
+int g_combine_result[120][8];
 int g_combine_tmp[8];
 int g_combine_count = 0;
 int g_combine_end;
@@ -476,18 +477,6 @@ int open_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
 			} 
 		}
 	}
-	
-	//
-	for(i = 0;i < WIDE;i++)
-	{
-		for(j = 0;j < LENGTH;j++)
-		{
-			if(open_status(fp,i,j) && mine_status(fp,i,j))
-			{
-				return 1;
-			}
-		}
-	}
 	return result;
 }
 
@@ -745,7 +734,7 @@ void cal_question_clear(Content_type (*fp)[LENGTH])
  */
 
 
-_Bool location_equal(Location_type (*lfp)[9],int waitflag_n, int right_way)
+_Bool location_equal(Location_type (*lfp)[RIGHT_WAY],int waitflag_n, int right_way)
 {
 	int i,j;
 	int x,y;
@@ -756,7 +745,7 @@ _Bool location_equal(Location_type (*lfp)[9],int waitflag_n, int right_way)
 	y = (*(lfp+waitflag_n))[0].y;
 	for(i = 0;i < right_way;i++)
 	{
-		for(j = 0;j < 9;j++)
+		for(j = 0;j < 20;j++)
 		{
 			if ((*(lfp+j))[i].x == x && (*(lfp+j))[i].y == y)
 			{
@@ -799,10 +788,10 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 	int right_way = 0;
 	
 	_Bool return_status = false;
-	Location_type waitflag[9][9];
-	Location_type waitopen[9][9];
-	int waitflag_n[9];
-	int waitopen_n[9];
+	Location_type waitflag[20][RIGHT_WAY];
+	Location_type waitopen[20][RIGHT_WAY];
+	int waitflag_n[RIGHT_WAY];
+	int waitopen_n[RIGHT_WAY];
 	
 	for(i = 0;i < WIDE;i++)
 	{	
@@ -833,9 +822,9 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 			g_combine_count = 0;
 			g_combine_end = mine_n;
 			
-			for(itmp = 0;itmp < 9;itmp++)
+			for(itmp = 0;itmp < 20;itmp++)
 			{
-				for(jtmp = 0;jtmp < 9;jtmp++)
+				for(jtmp = 0;jtmp < RIGHT_WAY;jtmp++)
 				{
 					waitflag[itmp][jtmp].x = -1;
 					waitflag[itmp][jtmp].y = -1;
@@ -965,12 +954,13 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 
 							}
 						}
-						right_way++;
-						if(right_way > 8)
+						if(right_way > RIGHT_WAY)
 						{
+							right_exe = false;
 							cal_question_clear(fp);
 							return false;
 						}
+						right_way++;
 					}
 					right_exe = false;
 					cal_question_clear(fp);
@@ -980,7 +970,7 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 					waitflag_n[0] = MIN(waitflag_n[0],waitflag_n[itmp]);
 					waitopen_n[0] = MIN(waitopen_n[0],waitopen_n[itmp]);
 				}
-				if(right_way > 0 && right_way < 9)
+				if(right_way > 0 && right_way < RIGHT_WAY)
 				{
 					for(itmp = 0;itmp < waitflag_n[0];itmp++)
 					{
@@ -1010,6 +1000,7 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 	return return_status;
 	
 }
+
 #endif
 
 /*
