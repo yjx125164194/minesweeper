@@ -476,6 +476,18 @@ int open_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
 			} 
 		}
 	}
+	
+	//
+	for(i = 0;i < WIDE;i++)
+	{
+		for(j = 0;j < LENGTH;j++)
+		{
+			if(open_status(fp,i,j) && mine_status(fp,i,j))
+			{
+				return 1;
+			}
+		}
+	}
 	return result;
 }
 
@@ -600,7 +612,6 @@ int random_open(Content_type (*fp)[LENGTH])
 	return 0;
 }
 
-_Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number);
 _Bool ana_open(Content_type (*fp)[LENGTH]);
 /*
  * 按照目前的雷区
@@ -754,7 +765,7 @@ _Bool location_equal(Location_type (*lfp)[9],int waitflag_n, int right_way)
 			}
 		}
 	}
-	if(right_num == right_way)
+	if(right_num == right_way && right_way  !=  0)
 	{
 		return true;
 	}
@@ -955,6 +966,11 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 							}
 						}
 						right_way++;
+						if(right_way > 8)
+						{
+							cal_question_clear(fp);
+							return false;
+						}
 					}
 					right_exe = false;
 					cal_question_clear(fp);
@@ -964,20 +980,23 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 					waitflag_n[0] = MIN(waitflag_n[0],waitflag_n[itmp]);
 					waitopen_n[0] = MIN(waitopen_n[0],waitopen_n[itmp]);
 				}
-				for(itmp = 0;itmp < waitflag_n[0];itmp++)
+				if(right_way > 0 && right_way < 9)
 				{
-					if(location_equal(waitflag,itmp,right_way))
+					for(itmp = 0;itmp < waitflag_n[0];itmp++)
 					{
-						flag_user_location(fp,&(waitflag[itmp][0]));
-						return_status = true;
+						if(location_equal(waitflag,itmp,right_way))
+						{
+							flag_user_location(fp,&(waitflag[itmp][0]));
+							return_status = true;
+						}
 					}
-				}
-				for(itmp = 0;itmp < waitopen_n[0];itmp++)
-				{
-					if(location_equal(waitopen,itmp,right_way))
+					for(itmp = 0;itmp < waitopen_n[0];itmp++)
 					{
-						open_user_location(fp,&(waitopen[itmp][0]));
-						return_status = true;
+						if(location_equal(waitopen,itmp,right_way))
+						{
+							open_user_location(fp,&(waitopen[itmp][0]));
+							return_status = true;
+						}
 					}
 				}
 				if(return_status)
