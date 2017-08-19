@@ -37,8 +37,8 @@
  */
  
 #ifdef AUTO_MODE
-	#define SPEED       1000*1000
-	#define TIMES	    100
+	#define SPEED       5000*1000
+	#define TIMES	    10000
 #else
 	#define SPEED       500*1000
 	#define TIMES       1
@@ -273,7 +273,15 @@ void print_block(Content_type (*fp)[LENGTH],Location_type *lfp)
 						#ifdef AUTO_MODE
 						else if((*(fp+i))[j].question_status)
 						{
-							printf("?");//当处于AUTO_MODE下时，用来标记cal_open所赋予的怀疑状态
+							//当处于AUTO_MODE下时，用来标记cal_open所赋予的怀疑状态
+							if((*(fp+i))[j].question_mine)
+							{
+								printf("♂");
+							}
+							else
+							{
+								printf("♀");
+							}
 						}
 						#endif
 						else if(flag_status(fp,i,j))
@@ -687,10 +695,18 @@ void nohuman_open(Content_type (*fp)[LENGTH])
 		//若调用cal_open系列函数，雷区opened_count依旧没有变化
 		//则在main的主循环处，关闭该函数实现
 		//同时打开随机打开函数的全局变量
-		if((!_121_open(fp)) && (!cal_open(fp,2,1)) && (!cal_open(fp,3,1)) && (!cal_open(fp,3,2)))
+		//if(!ana_open(fp))
+		if((!cal_open(fp,2,1)) && (!cal_open(fp,3,1)) && (!cal_open(fp,3,2)))
 		{
-			AUTO_MODE_NOHUMAN = true;
-			AUTO_MODE_RANDOM = false;
+			if((!ana_open(fp)))
+			{
+				AUTO_MODE_NOHUMAN = true;
+				AUTO_MODE_RANDOM = false;
+			}
+			else
+			{
+				AUTO_MODE_NOHUMAN = false;
+			}
 		}
 		else
 		{	
@@ -929,9 +945,10 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 	int unquestion_tmp;
 	Location_type unquestion[8];
 	
-	_Bool right_result;
 	_Bool right_status;
 	_Bool right_exe;
+	int right_way = 0;
+	
 	_Bool return_status = false;
 	Location_type waitflag[15];
 	int waitflag_n;
@@ -942,6 +959,7 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 		{	
 			empty_n = 0;
 			mine_n = 0;
+			right_way = 0;
 			if(open_status(fp,i,j) && (!content_empty_status(fp,i,j)))
 			{
 				mine_n = content_number(fp,i,j);
@@ -964,9 +982,8 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 			g_combine_count = 0;
 			g_combine_end = mine_n;
 			waitflag_n = 0;
-			if(mine_n < empty_n)
+			if(mine_n < empty_n && empty_n <= 3)
 			{
-				right_result = false;
 				combine(empty_n,mine_n);
 				for(combine_i = 0;combine_i < g_combine_count;combine_i++)
 				{
@@ -982,10 +999,13 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 					{	
 						for(jtmp = MAX(j-1,0);jtmp <= MIN(j+1,LENGTH-1);jtmp++)
 						{
-							if(!((*(fp+itmp))[jtmp].question_status))
+							if((!open_status(fp,itmp,jtmp)) && (!flag_status(fp,itmp,jtmp)))
 							{
-								(*(fp+itmp))[jtmp].question_status = true;
-								(*(fp+itmp))[jtmp].question_mine = false;
+								if(!((*(fp+itmp))[jtmp].question_status))
+								{
+									(*(fp+itmp))[jtmp].question_status = true;
+									(*(fp+itmp))[jtmp].question_mine = false;
+								}
 							}
 						}
 					}
@@ -1021,14 +1041,13 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 												mine_tmp++;
 											}
 										}
-										else
+										else if(flag_status(fp,itmp2,jtmp2))
 										{
 											mine_tmp++;
 										}
 
 									}
 								}
-								printf("%d,%d|%d|%d\n",itmp,jtmp,content_number(fp,itmp,jtmp),mine_tmp);
 								if(content_number(fp,itmp,jtmp) < mine_tmp)
 								{
 									right_status = false;
@@ -1063,39 +1082,40 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 							}
 						}
 					}
-					if(right_status && right_result)
+					
+					//print_block(fp,&empty[0]);
+					//printf("status %d,way %d,exe %d\n",right_status,right_way,right_exe);
+					if(right_status && right_exe)
 					{
-						right_result = false;
-						right_status = false;
-					}
-					else if(right_status && !right_result && right_exe)
-					{
-						right_result = true;
+						right_way++;
 						for(itmp = MAX(i-2,0);itmp <= MIN(i+2,WIDE-1);itmp++)
 						{	
 							for(jtmp = MAX(j-2,0);jtmp <= MIN(j+2,LENGTH-1);jtmp++)
 							{
-								if((*(fp+unquestion[itmp].y))[unquestion[itmp].x].question_status == true
-								&& (*(fp+unquestion[itmp].y))[unquestion[itmp].x].question_mine == true)
+								if((*(fp+itmp))[jtmp].question_status == true
+								&& (*(fp+itmp))[jtmp].question_mine == true)
 								{
 									waitflag[waitflag_n].x = jtmp;
 									waitflag[waitflag_n].y = itmp;
 									waitflag_n++;
 								}
-
 							}
 						}
 					}
+					right_exe = false;
 					cal_question_clear(fp);
 				}
-				if(right_result)
+				if(right_way == 1)
 				{
-					for(itmp = 0;itmp < waitflag_n;i++)
+					for(itmp = 0;itmp < waitflag_n;itmp++)
 					{
-						flag_user_location(fp,&(waitflag[waitflag_n]));
+						
+						print_block(fp,&empty[0]);
+						flag_user_location(fp,&(waitflag[itmp]));
 					}
 					return_status = true;
 				}
+				right_way = 0;
 			}
 		}
 	}
@@ -1390,7 +1410,8 @@ int main(int argc,char *argv[])
 			if(!AUTO_MODE_NOHUMAN)
 			{
 				nohuman_open(pContent);
-			}	
+			}
+			//print_block(pContent,pUser);
 		#endif
 			//打印所有雷区
 			if(result)
@@ -1400,7 +1421,7 @@ int main(int argc,char *argv[])
 				printf("You open the mine and failed!\n");
 			#else	
 				lose++;
-				//print_block(pContent,pUser);
+				print_block(pContent,pUser);
 			#endif
 				break;
 			}
