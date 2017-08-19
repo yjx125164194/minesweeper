@@ -37,8 +37,8 @@
  */
  
 #ifdef AUTO_MODE
-	#define SPEED       5000*1000
-	#define TIMES	    100000
+	#define SPEED       500*1000
+	#define TIMES	    10000
 #else
 	#define SPEED       500*1000
 	#define TIMES       1
@@ -693,9 +693,11 @@ void nohuman_open(Content_type (*fp)[LENGTH])
 		//若调用cal_open系列函数，雷区opened_count依旧没有变化
 		//则在main的主循环处，关闭该函数实现
 		//同时打开随机打开函数的全局变量
-		if((!cal_open(fp,2,1)) && (!cal_open(fp,3,1)) && (!cal_open(fp,3,2)))
+		//if((!cal_open(fp,2,1)) && (!cal_open(fp,3,1)) && (!cal_open(fp,3,2)))
+		if(!ana_open(fp))
 		{
-			if((!ana_open(fp)))
+			//if((!ana_open(fp)))
+			if(1)
 			{
 				AUTO_MODE_NOHUMAN = true;
 				AUTO_MODE_RANDOM = false;
@@ -923,6 +925,37 @@ _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number)
 	}
 	return result;
 }
+
+_Bool location_equal(Location_type (*lfp)[9],int waitflag_n, int right_way)
+{
+	int i,j;
+	int x,y;
+	
+	int right_num = 0;
+
+	x = (*(lfp+waitflag_n))[0].x;
+	y = (*(lfp+waitflag_n))[0].y;
+	for(i = 0;i < right_way;i++)
+	{
+		for(j = 0;j < 9;j++)
+		{
+			if ((*(lfp+j))[i].x == x && (*(lfp+j))[i].y == y)
+			{
+				right_num++;
+				break;
+			}
+		}
+	}
+	if(right_num == right_way)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
 _Bool ana_open(Content_type (*fp)[LENGTH])
 {
 	int i,j;
@@ -947,8 +980,8 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 	int right_way = 0;
 	
 	_Bool return_status = false;
-	Location_type waitflag[15];
-	int waitflag_n;
+	Location_type waitflag[9][9];
+	int waitflag_n[9];
 	
 	for(i = 0;i < WIDE;i++)
 	{	
@@ -978,6 +1011,16 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 			}
 			g_combine_count = 0;
 			g_combine_end = mine_n;
+			
+			for(itmp = 0;itmp < 9;itmp++)
+			{
+				for(jtmp = 0;jtmp < 9;jtmp++)
+				{
+					waitflag[itmp][jtmp].x = -1;
+					waitflag[itmp][jtmp].y = -1;
+				}
+			}
+
 			if(mine_n < empty_n)
 			{
 				combine(empty_n,mine_n);
@@ -1005,9 +1048,9 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 							}
 						}
 					}
-					for(itmp = MAX(i-1,0);itmp <= MIN(i+1,WIDE-1);itmp++)
+					for(itmp = MAX(i-3,0);itmp <= MIN(i+3,WIDE-1);itmp++)
 					{	
-						for(jtmp = MAX(j-1,0);jtmp <= MIN(j+1,LENGTH-1);jtmp++)
+						for(jtmp = MAX(j-3,0);jtmp <= MIN(j+3,LENGTH-1);jtmp++)
 						{
 							if(open_status(fp,itmp,jtmp) && !content_empty_status(fp,itmp,jtmp) && right_status)
 							{
@@ -1076,39 +1119,41 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 					}
 					if(right_status && right_exe)
 					{
-						right_way++;
-						if(right_way > 1)
-						{
-							right_way = 0;
-							right_exe = false;
-							cal_question_clear(fp);
-							break;
-						}
-						waitflag_n = 0;
-						for(itmp = MAX(i-2,0);itmp <= MIN(i+2,WIDE-1);itmp++)
+						waitflag_n[right_way] = 0;
+						for(itmp = MAX(i-3,0);itmp <= MIN(i+3,WIDE-1);itmp++)
 						{	
-							for(jtmp = MAX(j-2,0);jtmp <= MIN(j+2,LENGTH-1);jtmp++)
+							for(jtmp = MAX(j-3,0);jtmp <= MIN(j+3,LENGTH-1);jtmp++)
 							{
 								if((*(fp+itmp))[jtmp].question_status == true
 								&& (*(fp+itmp))[jtmp].question_mine == true)
 								{
-									waitflag[waitflag_n].x = jtmp;
-									waitflag[waitflag_n].y = itmp;
-									waitflag_n++;
+									waitflag[waitflag_n[right_way]][right_way].x = jtmp;
+									waitflag[waitflag_n[right_way]][right_way].y = itmp;
+									waitflag_n[right_way]++;
 								}
 							}
 						}
+						right_way++;
 					}
 					right_exe = false;
 					cal_question_clear(fp);
 				}
-				if(right_way == 1)
+				for(itmp = 0;itmp < right_way;itmp++)
 				{
-					for(itmp = 0;itmp < waitflag_n;itmp++)
+					waitflag_n[0] = MIN(waitflag_n[0],waitflag_n[itmp]);
+				}
+				for(itmp = 0;itmp < waitflag_n[0];itmp++)
+				{
+					if(location_equal(waitflag,itmp,right_way))
 					{
-						flag_user_location(fp,&(waitflag[itmp]));
+						flag_user_location(fp,&(waitflag[itmp][0]));
+						//print_block(fp,&waitflag[0][0]);
+						return_status = true;
 					}
-					return_status = true;
+				}
+				if(return_status)
+				{
+					return return_status;
 				}
 				right_way = 0;
 			}
@@ -1202,7 +1247,6 @@ int main(int argc,char *argv[])
 			{
 				nohuman_open(pContent);
 			}
-			//print_block(pContent,pUser);
 		#endif
 			//打印所有雷区
 			if(result)
