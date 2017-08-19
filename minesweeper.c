@@ -38,7 +38,7 @@
  
 #ifdef AUTO_MODE
 	#define SPEED       5000*1000
-	#define TIMES	    10000
+	#define TIMES	    100000
 #else
 	#define SPEED       500*1000
 	#define TIMES       1
@@ -602,8 +602,6 @@ int random_open(Content_type (*fp)[LENGTH])
 
 _Bool cal_open(Content_type (*fp)[LENGTH],int all_number,int mine_number);
 _Bool ana_open(Content_type (*fp)[LENGTH]);
-_Bool _121_open(Content_type (*fp)[LENGTH]);
-_Bool _1221_open(Content_type (*fp)[LENGTH]);
 /*
  * 按照目前的雷区
  * 无脑打开可以被打开的
@@ -695,7 +693,6 @@ void nohuman_open(Content_type (*fp)[LENGTH])
 		//若调用cal_open系列函数，雷区opened_count依旧没有变化
 		//则在main的主循环处，关闭该函数实现
 		//同时打开随机打开函数的全局变量
-		//if(!ana_open(fp))
 		if((!cal_open(fp,2,1)) && (!cal_open(fp,3,1)) && (!cal_open(fp,3,2)))
 		{
 			if((!ana_open(fp)))
@@ -981,8 +978,7 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 			}
 			g_combine_count = 0;
 			g_combine_end = mine_n;
-			waitflag_n = 0;
-			if(mine_n < empty_n && empty_n <= 3)
+			if(mine_n < empty_n)
 			{
 				combine(empty_n,mine_n);
 				for(combine_i = 0;combine_i < g_combine_count;combine_i++)
@@ -1009,9 +1005,9 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 							}
 						}
 					}
-					for(itmp = MAX(i-2,0);itmp <= MIN(i+2,WIDE-1);itmp++)
+					for(itmp = MAX(i-1,0);itmp <= MIN(i+1,WIDE-1);itmp++)
 					{	
-						for(jtmp = MAX(j-2,0);jtmp <= MIN(j+2,LENGTH-1);jtmp++)
+						for(jtmp = MAX(j-1,0);jtmp <= MIN(j+1,LENGTH-1);jtmp++)
 						{
 							if(open_status(fp,itmp,jtmp) && !content_empty_status(fp,itmp,jtmp) && right_status)
 							{
@@ -1074,20 +1070,21 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 															.question_mine = true;
 										}
 									}
-									else
-									{
-										right_status = false;
-									}
 								}
 							}
 						}
 					}
-					
-					//print_block(fp,&empty[0]);
-					//printf("status %d,way %d,exe %d\n",right_status,right_way,right_exe);
 					if(right_status && right_exe)
 					{
 						right_way++;
+						if(right_way > 1)
+						{
+							right_way = 0;
+							right_exe = false;
+							cal_question_clear(fp);
+							break;
+						}
+						waitflag_n = 0;
 						for(itmp = MAX(i-2,0);itmp <= MIN(i+2,WIDE-1);itmp++)
 						{	
 							for(jtmp = MAX(j-2,0);jtmp <= MIN(j+2,LENGTH-1);jtmp++)
@@ -1109,8 +1106,6 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 				{
 					for(itmp = 0;itmp < waitflag_n;itmp++)
 					{
-						
-						print_block(fp,&empty[0]);
 						flag_user_location(fp,&(waitflag[itmp]));
 					}
 					return_status = true;
@@ -1122,210 +1117,6 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 	return return_status;
 	
 }
-_Bool _121_open(Content_type (*fp)[LENGTH])
-{
-	int i,j;	
-	int itmp,jtmp;
-	//在这里需要将已标记的雷排除，故将雷区二维数组建立了一个副本
-	//为了编写简单采用tmp[WIDE][LENGTH]形式
-	Content_type tmp[WIDE][LENGTH];
-	Location_type ltmp;
-	_Bool status_121 = false;
-	_Bool status_result = false;
-	enum
-	{
-		null,
-		up_down,
-		left_right
-	}status_dir;
-	
-	status_dir = null;
-
-	//对副本进行初始化并将当前的雷减去
-	for(i = 0;i < WIDE;i++)
-	{	
-		for(j = 0;j < LENGTH;j++)
-		{	
-			tmp[i][j] = (*(fp+i))[j];
-			if(open_status(tmp,i,j) && (!content_empty_status(tmp,i,j)))
-			{
-				for(itmp = MAX(i-1,0);itmp <= MIN(i+1,WIDE-1);itmp++)
-				{	
-					for(jtmp = MAX(j-1,0);jtmp <= MIN(j+1,LENGTH-1);jtmp++)
-					{
-						//此处每次判定时，tmp并未完全将雷区属性拷贝，故还采用fp的属性判断
-						if(flag_status(fp,itmp,jtmp))
-						{
-							tmp[i][j].content--;
-						}
-					}
-				}
-			}
-		}
-	}
-	for(i = 0;i < WIDE;i++)
-	{	
-		for(j = 0;j < LENGTH;j++)
-		{	
-			status_121 = false;
-			status_dir = empty;
-	
-			if(open_status(tmp,i,j) 
-			&& (tmp[i][j].content == 2)
-			&& !(i == 0 && j == 0)
-			&& !(i == 0 && j == LENGTH - 1)
-			&& !(i == WIDE - 1 && j == 0)
-			&& !(i == WIDE - 1 && j == LENGTH - 1))//当打开的内容为2且该点不在四个角上进入条件执行
-			{
-				//当该点在最上行或最下行时判定左右
-				if(i == 0 || i == WIDE - 1)	
-				{
-					if((tmp[i][j-1].content == 1) && (tmp[i][j+1].content == 1))
-					{
-						status_121 = true;
-						status_dir = left_right;
-					}
-				}
-				//当该点在最左行或最右行时判定上下
-				else if(j == 0 || j == LENGTH - 1)
-				{
-					if((tmp[i-1][j].content == 1) && (tmp[i+1][j].content == 1))
-					{
-						status_121 = true;
-						status_dir = up_down;
-					}
-				}
-				else
-				{
-					//上下左右均判定
-					if((tmp[i-1][j].content == 1) && (tmp[i+1][j].content == 1))
-					{
-						status_121 = true;
-						status_dir = up_down;
-					}
-					else if((tmp[i][j-1].content == 1) && (tmp[i][j+1].content == 1))
-					{
-						status_121 = true;
-						status_dir = left_right;
-					}
-				}
-			}
-			if(status_121)//如果符合121范式判定
-			{
-				if(status_dir == up_down)
-				{
-					//如果是上下结构，且121在最左边或最右边则只判定一边的情况，若不在最左最右则判定两边的情况
-					//当某一边三个都没标记为雷且都是未打开状态时将中间的打开
-					//左右结构同理
-					if(j == LENGTH - 1)
-					{
-						if((!open_status(tmp,i-1,j-1)) && (!flag_status(tmp,i-1,j-1))	
-							&&(!open_status(tmp,i,j-1)) && (!flag_status(tmp,i,j-1))	
-							&&(!open_status(tmp,i+1,j-1)) && (!flag_status(tmp,i+1,j-1)))
-						{
-							ltmp.x = j - 1;
-							ltmp.y = i;
-							open_user_location(fp,&ltmp);
-							status_result = true;
-						}	
-					}
-					else if(j == 0)
-					{
-						if((!open_status(tmp,i-1,j+1)) && (!flag_status(tmp,i-1,j+1))	
-							&&(!open_status(tmp,i,j+1)) && (!flag_status(tmp,i,j+1))	
-							&&(!open_status(tmp,i+1,j+1)) && (!flag_status(tmp,i+1,j+1)))
-						{
-							ltmp.x = j + 1;
-							ltmp.y = i;
-							open_user_location(fp,&ltmp);
-							status_result = true;
-						}	
-					}
-					else
-					{
-						if((!open_status(tmp,i-1,j-1)) && (!flag_status(tmp,i-1,j-1))	
-							&&(!open_status(tmp,i,j-1)) && (!flag_status(tmp,i,j-1))	
-							&&(!open_status(tmp,i+1,j-1)) && (!flag_status(tmp,i+1,j-1)))
-						{
-							ltmp.x = j - 1;
-							ltmp.y = i;
-							open_user_location(fp,&ltmp);
-							status_result = true;
-						}
-						else if((!open_status(tmp,i-1,j+1)) && (!flag_status(tmp,i-1,j+1))	
-							&&(!open_status(tmp,i,j+1)) && (!flag_status(tmp,i,j+1))	
-							&&(!open_status(tmp,i+1,j+1)) && (!flag_status(tmp,i+1,j+1)))
-						{
-							ltmp.x = j + 1;
-							ltmp.y = i;
-							open_user_location(fp,&ltmp);
-							status_result = true;
-						}
-					}
-				}
-				else if(status_dir == left_right)
-				{
-					if(i == WIDE - 1)
-					{
-						if((!open_status(tmp,i-1,j-1)) && (!flag_status(tmp,i-1,j-1))	
-							&&(!open_status(tmp,i-1,j)) && (!flag_status(tmp,i-1,j))	
-							&&(!open_status(tmp,i-1,j+1)) && (!flag_status(tmp,i-1,j+1)))
-						{
-							ltmp.x = j;
-							ltmp.y = i - 1;
-							open_user_location(fp,&ltmp);
-							status_result = true;
-						}	
-					}
-					else if(i == 0)
-					{
-						if((!open_status(tmp,i+1,j-1)) && (!flag_status(tmp,i+1,j-1))	
-							&&(!open_status(tmp,i+1,j)) && (!flag_status(tmp,i+1,j))	
-							&&(!open_status(tmp,i+1,j+1)) && (!flag_status(tmp,i+1,j+1)))
-						{
-							ltmp.x = j;
-							ltmp.y = i + 1;
-							open_user_location(fp,&ltmp);
-							status_result = true;
-						}	
-					}
-					else
-					{
-						if((!open_status(tmp,i-1,j-1)) && (!flag_status(tmp,i-1,j-1))	
-							&&(!open_status(tmp,i-1,j)) && (!flag_status(tmp,i-1,j))	
-							&&(!open_status(tmp,i-1,j+1)) && (!flag_status(tmp,i-1,j+1)))
-						{
-							ltmp.x = j;
-							ltmp.y = i - 1;
-							open_user_location(fp,&ltmp);
-							status_result = true;
-						}
-						else if((!open_status(tmp,i+1,j-1)) && (!flag_status(tmp,i+1,j-1))	
-							&&(!open_status(tmp,i+1,j)) && (!flag_status(tmp,i+1,j))	
-							&&(!open_status(tmp,i+1,j+1)) && (!flag_status(tmp,i+1,j+1)))
-						{
-							ltmp.x = j;
-							ltmp.y = i + 1;
-							open_user_location(fp,&ltmp);
-							status_result = true;
-						}	
-	
-					}
-
-				}
-			}
-		}
-	}
-	return status_result;
-}
-
-_Bool _1221_open(Content_type (*fp)[LENGTH])
-{
-	
-}
-
-
-
 #endif
 
 /*
@@ -1421,7 +1212,7 @@ int main(int argc,char *argv[])
 				printf("You open the mine and failed!\n");
 			#else	
 				lose++;
-				print_block(pContent,pUser);
+				//print_block(pContent,pUser);
 			#endif
 				break;
 			}
