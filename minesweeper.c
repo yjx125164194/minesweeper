@@ -57,7 +57,8 @@
 	_Bool AUTO_MODE_NOHUMAN    = false;
 	_Bool AUTO_FIRST_ENTER     = true;
 	int   random_times 	   = 0;
-	#define RIGHT_WAY 	   40
+	#define RIGHT_MAX 	   60
+	#define BLOCK_MAX	   20
 #endif	
 
 int opened_count = 0;
@@ -734,7 +735,7 @@ void cal_question_clear(Content_type (*fp)[LENGTH])
  */
 
 
-_Bool location_equal(Location_type (*lfp)[RIGHT_WAY],int waitflag_n, int right_way)
+_Bool location_equal(Location_type (*lfp)[RIGHT_MAX],int waitflag_n, int right_way)
 {
 	int i,j;
 	int x,y;
@@ -745,7 +746,7 @@ _Bool location_equal(Location_type (*lfp)[RIGHT_WAY],int waitflag_n, int right_w
 	y = (*(lfp+waitflag_n))[0].y;
 	for(i = 0;i < right_way;i++)
 	{
-		for(j = 0;j < 20;j++)
+		for(j = 0;j < BLOCK_MAX;j++)
 		{
 			if ((*(lfp+j))[i].x == x && (*(lfp+j))[i].y == y)
 			{
@@ -788,10 +789,10 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 	int right_way = 0;
 	
 	_Bool return_status = false;
-	Location_type waitflag[20][RIGHT_WAY];
-	Location_type waitopen[20][RIGHT_WAY];
-	int waitflag_n[RIGHT_WAY];
-	int waitopen_n[RIGHT_WAY];
+	Location_type waitflag[BLOCK_MAX][RIGHT_MAX];
+	Location_type waitopen[BLOCK_MAX][RIGHT_MAX];
+	int waitflag_n[RIGHT_MAX];
+	int waitopen_n[RIGHT_MAX];
 	
 	for(i = 0;i < WIDE;i++)
 	{	
@@ -822,9 +823,9 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 			g_combine_count = 0;
 			g_combine_end = mine_n;
 			
-			for(itmp = 0;itmp < 20;itmp++)
+			for(itmp = 0;itmp < BLOCK_MAX;itmp++)
 			{
-				for(jtmp = 0;jtmp < RIGHT_WAY;jtmp++)
+				for(jtmp = 0;jtmp < RIGHT_MAX;jtmp++)
 				{
 					waitflag[itmp][jtmp].x = -1;
 					waitflag[itmp][jtmp].y = -1;
@@ -954,7 +955,7 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 
 							}
 						}
-						if(right_way > RIGHT_WAY)
+						if(right_way > RIGHT_MAX)
 						{
 							right_exe = false;
 							cal_question_clear(fp);
@@ -970,7 +971,7 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 					waitflag_n[0] = MIN(waitflag_n[0],waitflag_n[itmp]);
 					waitopen_n[0] = MIN(waitopen_n[0],waitopen_n[itmp]);
 				}
-				if(right_way > 0 && right_way < RIGHT_WAY)
+				if(right_way > 0 && right_way < RIGHT_MAX)
 				{
 					for(itmp = 0;itmp < waitflag_n[0];itmp++)
 					{
