@@ -558,7 +558,8 @@ int random_open(Content_type (*fp)[LENGTH])
 	Location_type lfp;
 	int i,j;
 	//当被打开的数量小于总被打开的4/5时，随机打开某个坐标
-	if(opened_count < (((WIDE * LENGTH) - NUMBER)*4/5))
+	//if(opened_count < (((WIDE * LENGTH) - NUMBER)*4/5))
+	if(1)
 	{
 		do
 		{
@@ -1127,10 +1128,7 @@ int main(int argc,char *argv[])
 	}
 	mine_stop = clock();
 	mine_time = (double)(mine_stop - mine_start) / CLOCKS_PER_SEC;    
-#ifndef AUTO_MODE   	
-	printf( "you used %f seconds\n",mine_time);
-#else
-	
+#ifdef AUTO_MODE   	
 	printf("Finished!\nyou calculate %d times\nwin %d times\nlose %d times\nwin percent %.3f%%\n",
 		times,win,lose,(float)(win)/(win+lose)*100);
 	printf( "use %.5f seconds\naverage use %.5f seconds\none second can solve %.5f times\n",
