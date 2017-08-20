@@ -782,6 +782,7 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 	
 	int empty_tmp;
 	int mine_tmp;	
+	int mine_last;
 	int unquestion_tmp;
 	Location_type unquestion[8];
 	
@@ -834,7 +835,6 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 					waitopen[itmp][jtmp].y = -1;
 				}
 			}
-
 			if(mine_n < empty_n)
 			{
 				combine(empty_n,mine_n);
@@ -842,11 +842,14 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 				{
 					right_status = true;
 					right_exe = false;
+					mine_last = NUMBER - marked_count;
+					
 					for(combine_j = 0;combine_j < mine_n;combine_j++)
 					{
 						tmp = g_combine_result[combine_i][combine_j];
 						(*(fp+empty[tmp-1].y))[empty[tmp-1].x].question_status = true;
 						(*(fp+empty[tmp-1].y))[empty[tmp-1].x].question_mine = true;
+						mine_last--;
 					}
 					for(itmp = MAX(i-1,0);itmp <= MIN(i+1,WIDE-1);itmp++)
 					{	
@@ -925,13 +928,14 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 															.question_status = true;
 											(*(fp+unquestion[itmp2].y))[unquestion[itmp2].x]
 															.question_mine = true;
+											mine_last--;
 										}
 									}
 								}
 							}
 						}
 					}
-					if(right_status && right_exe)
+					if(right_status && right_exe && mine_last >= 0)
 					{
 						waitflag_n[right_way] = 0;
 						waitopen_n[right_way] = 0;
