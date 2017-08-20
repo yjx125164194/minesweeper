@@ -57,8 +57,9 @@
 	_Bool AUTO_MODE_NOHUMAN    = false;
 	_Bool AUTO_FIRST_ENTER     = true;
 	int   random_times 	   = 0;
-	#define RIGHT_MAX 	   60
+	#define RIGHT_MAX 	   40
 	#define BLOCK_MAX	   20
+	#define SCAN_MAX           3
 #endif	
 
 int opened_count = 0;
@@ -202,7 +203,7 @@ void init_mine(Content_type (*fp)[LENGTH])
 
 void print_mine(Content_type (*fp)[LENGTH],int i,int j)
 {
-	switch((*(fp+i))[j].content)
+	switch(content_number(fp,i,j))
 	{
 		case empty:
 			printf(" ");
@@ -457,7 +458,7 @@ int open_user_location(Content_type (*fp)[LENGTH],Location_type *lfp)
 			}
 			//如果周围flag标记的数量与自己的content相同，代表该数字周围雷已经被全部探查
 			//则打开周围所有未打开且未标记的方块
-			if((*(fp+lfp->y))[lfp->x].content == flag_count)
+			if(content_number(fp,lfp->y,lfp->x) == flag_count)
 			{
 				for(i = MAX(lfp->y-1,0);i <= MIN(lfp->y+1,WIDE-1);i++)
 				{	
@@ -861,9 +862,9 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 							}
 						}
 					}
-					for(itmp = MAX(i-3,0);itmp <= MIN(i+3,WIDE-1);itmp++)
+					for(itmp = MAX(i-SCAN_MAX,0);itmp <= MIN(i+SCAN_MAX,WIDE-1);itmp++)
 					{	
-						for(jtmp = MAX(j-3,0);jtmp <= MIN(j+3,LENGTH-1);jtmp++)
+						for(jtmp = MAX(j-SCAN_MAX,0);jtmp <= MIN(j+SCAN_MAX,LENGTH-1);jtmp++)
 						{
 							if(open_status(fp,itmp,jtmp) && !content_empty_status(fp,itmp,jtmp) && right_status)
 							{
@@ -934,9 +935,9 @@ _Bool ana_open(Content_type (*fp)[LENGTH])
 					{
 						waitflag_n[right_way] = 0;
 						waitopen_n[right_way] = 0;
-						for(itmp = MAX(i-3,0);itmp <= MIN(i+3,WIDE-1);itmp++)
+						for(itmp = MAX(i-SCAN_MAX,0);itmp <= MIN(i+SCAN_MAX,WIDE-1);itmp++)
 						{	
-							for(jtmp = MAX(j-3,0);jtmp <= MIN(j+3,LENGTH-1);jtmp++)
+							for(jtmp = MAX(j-SCAN_MAX,0);jtmp <= MIN(j+SCAN_MAX,LENGTH-1);jtmp++)
 							{
 								if((*(fp+itmp))[jtmp].question_status == true
 								&& (*(fp+itmp))[jtmp].question_mine == true)
