@@ -558,8 +558,7 @@ int random_open(Content_type (*fp)[LENGTH])
 	Location_type lfp;
 	int i,j;
 	//当被打开的数量小于总被打开的4/5时，随机打开某个坐标
-	//if(opened_count < (((WIDE * LENGTH) - NUMBER)*4/5))
-	if(1)
+	if(opened_count < (((WIDE * LENGTH) - NUMBER)*4/5))
 	{
 		do
 		{
@@ -593,7 +592,7 @@ int random_open(Content_type (*fp)[LENGTH])
 	//当随机打开雷时，返回1表示游戏结束
 	if(open_user_location(fp,&lfp))
 	{
-		return 1;
+		return 2;
 	}
 	
 	//当随机模式函数被执行一次后，揭下来需要执行无脑推理模式
@@ -1032,6 +1031,7 @@ int main(int argc,char *argv[])
 #ifdef AUTO_MODE
 	int win = 0;
 	int lose = 0;
+	int random_lose = 0;
 #endif
 	User.y = WIDE/2;
 	User.x = LENGTH/2;
@@ -1102,6 +1102,10 @@ int main(int argc,char *argv[])
 				printf("You open the mine and failed!\n");
 			#else	
 				lose++;
+				if(result == 2)
+				{
+					random_lose++;
+				}
 				//print_block(pContent,pUser);
 			#endif
 				break;
@@ -1123,7 +1127,8 @@ int main(int argc,char *argv[])
 		opened_count = 0;
 		marked_count = 0;
 		AUTO_FIRST_ENTER = true;
-		printf("you win %d times and lose %d times,win percent = %.3f%%\n",win,lose,(float)(win)/(win+lose)*100);
+		printf("you win %d times and lose %d times,win percent = %.3f%%,not random lose %d times\n"
+			,win,lose,(float)(win)/(win+lose)*100,random_lose - lose);
 #endif	
 	}
 	mine_stop = clock();
