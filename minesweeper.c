@@ -38,7 +38,7 @@
  
 #ifdef AUTO_MODE
 	#define SPEED       500*1000
-	#define TIMES	    200000
+	#define TIMES	    500000
 #else
 	#define SPEED       500*1000
 	#define TIMES       1
@@ -1102,10 +1102,6 @@ int main(int argc,char *argv[])
 				printf("You open the mine and failed!\n");
 			#else	
 				lose++;
-				if(result == 2)
-				{
-					random_lose++;
-				}
 				//print_block(pContent,pUser);
 			#endif
 				break;
@@ -1127,8 +1123,8 @@ int main(int argc,char *argv[])
 		opened_count = 0;
 		marked_count = 0;
 		AUTO_FIRST_ENTER = true;
-		printf("you win %d times and lose %d times,win percent = %.3f%%,not random lose %d times\n"
-			,win,lose,(float)(win)/(win+lose)*100,random_lose - lose);
+		printf("you win %d times and lose %d times,win percent = %.3f%%\n"
+			,win,lose,(float)(win)/(win+lose)*100);
 #endif	
 	}
 	mine_stop = clock();
